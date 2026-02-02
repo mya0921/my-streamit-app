@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 
-st.set_page_config(page_title="나와 어울리는 영화는?", page_icon="🎬", layout="centered")
+st.set_page_config(page_title="나와 어울리는 영화는?", page_icon="🎬", layout="wide")
 
 # -----------------------------
 # UI: Title / Intro / API Key
@@ -12,6 +12,7 @@ st.write("간단한 5문항으로 당신의 영화 취향을 분석하고, TMDB�
 with st.sidebar:
     st.header("🔑 TMDB 설정")
     api_key = st.text_input("TMDB API Key", type="password", placeholder="여기에 입력")
+    st.caption("TMDB 키가 없으면 TMDB에서 발급받아 입력해 주세요.")
 
 st.divider()
 
@@ -26,9 +27,7 @@ questions = [
     ("5. 친구 사이에서 나는?", ["듣는 역할", "주도하기", "분위기 메이커", "필요할 때 나타남"]),
 ]
 
-# 각 선택지를 "선호 장르"로 매핑 (요구사항: 4개 선택지 = 4개 장르 선호)
-# 여기서는 4개 장르 축(로맨스/드라마, 액션/어드벤처, SF/판타지, 코미디)로 점수를 쌓고,
-# 최종적으로 TMDB 장르 ID(드라마/액션/SF/코미디/로맨스/판타지) 중 하나를 고릅니다.
+# 4개 선택지 -> 4개 성향 클러스터 점수 매핑
 choice_to_cluster = {
     # Q1
     "집에서 휴식": "romance_drama",
@@ -39,7 +38,7 @@ choice_to_cluster = {
     "혼자 있기": "romance_drama",
     "수다 떨기": "comedy",
     "운동하기": "action_adventure",
-    "맛있는 거 먹기": "comedy",  # 코미디 성향(가벼운 즐거움)
+    "맛있는 거 먹기": "comedy",
     # Q3
     "감동 스토리": "romance_drama",
     "시각적 영상미": "action_adventure",
@@ -57,7 +56,7 @@ choice_to_cluster = {
     "필요할 때 나타남": "sf_fantasy",
 }
 
-# 최종 TMDB 장르 ID 매핑
+# TMDB 장르 ID
 GENRE_IDS = {
     "액션": 28,
     "코미디": 35,
@@ -68,7 +67,7 @@ GENRE_IDS = {
 }
 
 cluster_to_genre = {
-    "romance_drama": ("드라마", 18),      # (장르명, ID)
+    "romance_drama": ("드라마", 18),
     "action_adventure": ("액션", 28),
     "sf_fantasy": ("SF", 878),
     "comedy": ("코미디", 35),
@@ -95,22 +94,18 @@ def analyze_genre(answers: dict):
         if cluster:
             scores[cluster] += 1
 
-    # 동점 처리: 우선순위를 약간 부여하거나(여기서는 드라마>액션>SF>코미디),
-    # 랜덤 대신 고정 우선순위로 결과가 안정적으로 나오게 처리
+    # 동점 처리: 고정 우선순위로 안정적인 결과 제공
     priority = ["romance_drama", "action_adventure", "sf_fantasy", "comedy"]
     top_score = max(scores.values())
     top_clusters = [c for c, s in scores.items() if s == top_score]
-    for p in priority:
-        if p in top_clusters:
-            top_cluster = p
-            break
+    top_cluster = next(p for p in priority if p in top_clusters)
 
     genre_name, genre_id = cluster_to_genre[top_cluster]
     reason = cluster_reason[top_cluster]
     return genre_name, genre_id, scores, reason
 
-def fetch_movies(api_key: str, genre_id: int, n: int = 5):
-    """TMDB discover API로 장르 인기 영화 가져오기"""
+def fetch_movies(api_key: str, genre_id: int, n: int = 6):
+    """TMDB discover API로 장르 인기 영화 가져오기 (카드 3열이 보기 좋아서 기본 6개)"""
     url = "https://api.themoviedb.org/3/discover/movie"
     params = {
         "api_key": api_key,
@@ -150,7 +145,7 @@ if st.button("결과 보기"):
     with st.spinner("분석 중..."):
         try:
             genre_name, genre_id, scores, overall_reason = analyze_genre(answers)
-            movies = fetch_movies(api_key, genre_id, n=5)
+            movies = fetch_movies(api_key, genre_id, n=6)
         except requests.HTTPError as e:
             st.error(f"TMDB 요청에 실패했어요. API Key가 올바른지 확인해주세요.\n\n에러: {e}")
             st.stop()
@@ -161,7 +156,8 @@ if st.button("결과 보기"):
             st.error(f"알 수 없는 오류가 발생했어요.\n\n에러: {e}")
             st.stop()
 
-    st.subheader(f"🎯 당신에게 어울리는 장르: {genre_name}")
+    # 1) 결과 타이틀
+    st.markdown(f"## ✨ 당신에게 딱인 장르는: **{genre_name}**!")
     st.caption(
         f"점수(성향): 드라마/로맨스={scores['romance_drama']} · "
         f"액션/어드벤처={scores['action_adventure']} · "
@@ -169,36 +165,40 @@ if st.button("결과 보기"):
         f"코미디={scores['comedy']}"
     )
     st.write(f"**추천 이유:** {overall_reason}")
-
     st.divider()
-    st.subheader("🍿 추천 영화 TOP 5")
+
+    st.subheader("🍿 추천 영화")
 
     if not movies:
         st.info("해당 장르에서 영화를 찾지 못했어요. 잠시 후 다시 시도해 주세요.")
-    else:
-        for m in movies:
-            title = m.get("title") or m.get("name") or "제목 정보 없음"
-            rating = m.get("vote_average", 0.0)
-            overview = m.get("overview") or "줄거리 정보가 없어요."
-            purl = poster_url(m.get("poster_path"))
+        st.stop()
 
-            # 영화별 추천 이유(간단)
-            per_movie_reason = (
-                f"당신의 선택이 '{genre_name}' 성향과 잘 맞아, "
-                f"대중적으로 인기(인기도 기준) 높은 작품 중에서 골랐어요."
-            )
+    # 2) 영화 카드 3열
+    cols = st.columns(3, gap="large")
 
-            with st.container():
-                cols = st.columns([1, 2.2])
-                with cols[0]:
-                    if purl:
-                        st.image(purl, use_container_width=True)
-                    else:
-                        st.info("포스터 없음")
-                with cols[1]:
-                    st.markdown(f"### {title}")
-                    st.write(f"⭐ 평점: **{rating:.1f}** / 10")
-                    st.write(overview)
-                    st.caption(f"💡 이 영화를 추천하는 이유: {per_movie_reason}")
+    for i, m in enumerate(movies):
+        title = m.get("title") or m.get("name") or "제목 정보 없음"
+        rating = float(m.get("vote_average") or 0.0)
+        overview = m.get("overview") or "줄거리 정보가 없어요."
+        purl = poster_url(m.get("poster_path"))
 
-                st.divider()
+        # 5) 영화별 추천 이유(간단)
+        per_movie_reason = (
+            f"당신의 선택이 **{genre_name}** 성향과 잘 맞고, "
+            f"TMDB에서 **인기도가 높은 작품**이라 먼저 추천했어요."
+        )
+
+        with cols[i % 3]:
+            # 3) 카드에 포스터/제목/평점
+            if purl:
+                st.image(purl, use_container_width=True)
+            else:
+                st.info("포스터 없음")
+
+            st.markdown(f"**{title}**")
+            st.write(f"⭐ 평점: **{rating:.1f}** / 10")
+
+            # 4) expander로 상세 정보
+            with st.expander("상세 보기"):
+                st.write(overview)
+                st.markdown(f"**이 영화를 추천하는 이유**: {per_movie_reason}")
