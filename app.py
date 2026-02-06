@@ -1,576 +1,332 @@
+import streamlit as st
 import json
-import math
+import os
 import random
 from datetime import date
+from urllib.parse import quote
 
-import requests
-import streamlit as st
+APP_TITLE = "Daily Weaver"
+PROFILE_PATH = "data/profile.json"
 
-# =========================================================
-# Page
-# =========================================================
-st.set_page_config(page_title="나와 어울리는 영화는?", page_icon="🎬", layout="wide")
+# -------------------------
+# Fixed sets
+# -------------------------
+STYLE_MODES = ["친한친구", "반려동물", "공식적", "코치", "작가"]
 
-# =========================================================
-# TMDB / OpenAI constants
-# =========================================================
-POSTER_BASE = "https://image.tmdb.org/t/p/w500"
-TMDB_DISCOVER_URL = "https://api.themoviedb.org/3/discover/movie"
-TMDB_DETAIL_URL = "https://api.themoviedb.org/3/movie/{movie_id}"
-TMDB_WATCH_PROVIDERS_LIST_URL = "https://api.themoviedb.org/3/watch/providers/movie"
-
-OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses"
-
-GENRE_IDS = {
-    "액션": 28,
-    "코미디": 35,
-    "드라마": 18,
-    "SF": 878,
-    "로맨스": 10749,
-    "판타지": 14,
-}
-
-# 추천 필터: 제작 대륙(원산지 국가코드 묶음)
-CONTINENT_TO_COUNTRIES = {
-    "전체": [],
-    "아시아": [
-        "KR", "JP", "CN", "TW", "HK", "SG", "TH", "VN", "PH", "ID", "MY", "IN",
-        "AE", "SA", "IL", "TR", "IR",
-    ],
-    "유럽": [
-        "GB", "FR", "DE", "IT", "ES", "NL", "BE", "SE", "NO", "DK", "FI", "IE", "PT", "PL", "CZ", "AT",
-        "CH", "HU", "RO", "GR", "UA",
-    ],
-    "북미": ["US", "CA", "MX"],
-    "남미": ["BR", "AR", "CL", "CO", "PE", "VE", "EC", "UY"],
-    "아프리카": ["ZA", "EG", "NG", "KE", "MA", "TN", "DZ", "GH"],
-    "오세아니아": ["AU", "NZ"],
-}
-
-# JustWatch 기준(OTT 필터) - 이 예시는 KR로 고정
-WATCH_REGION = "KR"
-LANGUAGE = "ko-KR"
-
-# =========================================================
-# UI Header
-# =========================================================
-st.title("🎬 나와 어울리는 영화는?")
-st.write("7문항으로 취향을 분석하고, TMDB 후보 중에서 LLM이 **진짜 너가 좋아할 1편**을 최종 선정해줘요! 🍿✨")
-
-if "seed" not in st.session_state:
-    st.session_state.seed = random.randint(1, 10**9)
-
-# =========================================================
-# Sidebar (re-designed)
-# =========================================================
-with st.sidebar:
-    st.header("🔑 API Keys")
-    tmdb_key = st.text_input("TMDB API Key", type="password", placeholder="TMDB 키 입력")
-    openai_key = st.text_input("OpenAI API Key", type="password", placeholder="OpenAI 키 입력")
-
-    st.divider()
-    st.header("🎛️ 추천 필터")
-
-    # 1) 대륙(제작 원산지)
-    continent = st.selectbox("🌍 제작 대륙", list(CONTINENT_TO_COUNTRIES.keys()), index=0)
-
-    # 2) OTT 선택(가능하면 TMDB에서 목록 불러오기)
-    ott_name_to_id = {"전체(필터 없음)": None}
-
-    if tmdb_key:
-        try:
-            # 제공자 목록 호출은 아래 캐시 함수에서
-            pass
-        except Exception:
-            pass
-
-    st.caption("📺 OTT는 한국(JustWatch) 기준으로 필터링됩니다.")
-    ott_choice_placeholder = st.empty()  # provider 로드 후 교체
-
-    # 3) 정렬/추천 기준
-    st.subheader("📌 추천 기준")
-    rec_mode = st.radio(
-        "어떤 기준으로 추천할까요?",
-        ["평점 중심(안정적)", "최신/연도 중심", "인기 중심(대중적)"],
-        index=0,
-    )
-
-    # 연도 옵션(최신/연도 중심일 때만 의미 있음)
-    year_now = date.today().year
-    year_from = st.slider("연도 범위(시작)", 1980, year_now, max(2005, year_now - 10))
-    year_to = st.slider("연도 범위(끝)", 1980, year_now, year_now)
-
-    st.subheader("⚙️ 품질/다양성")
-    include_adult = st.checkbox("성인 콘텐츠 포함", value=False)
-    min_vote_count = st.slider("최소 투표 수(평점 안정성)", 0, 3000, 300, 50)
-    max_movies = st.slider("추천 카드 개수", 5, 12, 6, 1)
-    diversify = st.checkbox("다양하게 추천(결과 변주)", value=True)
-    fetch_pages = st.slider("후보 페이지 수(다양성)", 1, 5, 3, 1)
-
-    colA, colB = st.columns(2)
-    with colA:
-        if st.button("🎲 추천 새로고침"):
-            st.session_state.seed = random.randint(1, 10**9)
-    with colB:
-        if st.button("🧹 캐시 초기화"):
-            st.cache_data.clear()
-            st.success("캐시를 지웠어요!")
-
-
-# =========================================================
-# TMDB cached calls
-# =========================================================
-@st.cache_data(ttl=60 * 10)
-def tmdb_watch_providers_list(api_key: str, watch_region: str):
-    params = {"api_key": api_key, "watch_region": watch_region}
-    r = requests.get(TMDB_WATCH_PROVIDERS_LIST_URL, params=params, timeout=20)
-    r.raise_for_status()
-    return r.json()
-
-
-@st.cache_data(ttl=60 * 10)
-def tmdb_discover(params: dict):
-    r = requests.get(TMDB_DISCOVER_URL, params=params, timeout=20)
-    r.raise_for_status()
-    return r.json()
-
-
-@st.cache_data(ttl=60 * 60)
-def tmdb_movie_detail(api_key: str, movie_id: int, language: str = LANGUAGE):
-    url = TMDB_DETAIL_URL.format(movie_id=movie_id)
-    params = {"api_key": api_key, "language": language}
-    r = requests.get(url, params=params, timeout=20)
-    r.raise_for_status()
-    return r.json()
-
-
-def poster_url(poster_path: str | None):
-    return (POSTER_BASE + poster_path) if poster_path else None
-
-
-# =========================================================
-# Load OTT providers into sidebar selectbox
-# =========================================================
-selected_provider_id = None
-ott_choice = "전체(필터 없음)"
-if tmdb_key:
-    try:
-        data = tmdb_watch_providers_list(tmdb_key, WATCH_REGION)
-        providers = data.get("results", []) or []
-        providers = sorted(providers, key=lambda x: x.get("display_priority", 9999))
-        for p in providers:
-            pid = p.get("provider_id")
-            pname = p.get("provider_name")
-            if pid and pname and pname not in ott_name_to_id:
-                ott_name_to_id[pname] = pid
-    except Exception:
-        pass
-
-with st.sidebar:
-    # placeholder를 실제 selectbox로 교체
-    ott_choice = ott_choice_placeholder.selectbox("📺 OTT 선택", list(ott_name_to_id.keys()), index=0)
-    selected_provider_id = ott_name_to_id.get(ott_choice)
-    if selected_provider_id:
-        st.caption(f"선택 OTT: {ott_choice} (provider_id={selected_provider_id}, region={WATCH_REGION})")
-
-
-# =========================================================
-# Questions: 총 7개 (MBTI처럼 보이지 않게 2문항을 섞음)
-# =========================================================
-st.subheader("📝 7문항 취향 테스트")
-
-questions = [
-    ("1. 주말에 가장 하고 싶은 것은?", ["집에서 휴식", "친구와 놀기", "새로운 곳 탐험", "혼자 취미생활"]),
-    ("2. 스트레스를 받으면 주로 어떻게 푸는 편이야?", ["혼자 정리하는 시간이 필요", "친구에게 얘기하며 푼다", "몸을 움직이며 푼다", "맛있는 걸 먹으며 기분 전환"]),
-    ("3. 영화에서 가장 중요하게 보는 건?", ["감동과 여운", "박진감/스케일", "설정/아이디어", "웃음 포인트"]),
-    ("4. 여행을 간다면 내 스타일은?", ["동선/일정을 꼼꼼히", "대략만 정하고 현지에서", "액티비티 위주로", "힐링/맛집/산책 위주로"]),
-    ("5. 과제나 준비할 일이 생기면 나는?", ["미리미리 나눠서 해두는 편", "마감이 다가와야 집중이 된다", "일단 시작하고 흐름 타면 끝까지", "같이 할 사람을 모아 분위기 만들기"]),
-    ("6. 새로운 콘텐츠를 볼 때 더 끌리는 건?", ["현실적으로 있을 법한 이야기", "완전히 새로운 세계/규칙이 있는 이야기", "관계/감정의 변화가 촘촘한 이야기", "가벼운 텐션으로 즐기는 이야기"]),
-    ("7. 친구들이 나를 설명할 때 더 가까운 건?", ["차분하고 믿음직하다", "에너지가 있고 추진력이 있다", "생각이 많고 독특한 편이다", "분위기를 풀어주는 편이다"]),
+EMOJI_FACE = [
+    ("😀", "기쁨"), ("🙂", "평온"), ("😐", "무덤덤"), ("😔", "우울"), ("😢", "슬픔"),
+    ("😭", "벅참"), ("😡", "분노"), ("😤", "답답"), ("😴", "피곤"), ("😬", "불안"),
+]
+EMOJI_SYMBOL = [
+    ("☀️", "맑음"), ("🌙", "감성"), ("🌧️", "침잠"), ("🌿", "안정"), ("🔥", "열정"),
+    ("⚡", "긴장"), ("🧊", "냉정"), ("🌊", "출렁임"), ("🫧", "가벼움"), ("🌸", "따뜻함"),
 ]
 
-# =========================================================
-# Scoring (장르 6개 + 숨은 성향축 2개)
-# - hidden axes:
-#   social: -1(혼자) ~ +1(사교)  -> 코미디/액션 가중
-#   imagination: -1(현실) ~ +1(상상) -> SF/판타지 가중
-# =========================================================
-def add_scores(score_dict: dict, adds: dict, weight: float = 1.0):
-    for k, v in adds.items():
-        score_dict[k] = score_dict.get(k, 0.0) + v * weight
+EMOTION_CHECKS = ["평온","기쁨","설렘","뿌듯","불안","답답","우울","분노","피곤","무기력"]
+ACTIVITY_CHECKS = ["공부","업무","운동","휴식","약속","창작","정리","이동","소비","회복"]
 
+# TODO: 질문 150개는 question_bank.json으로 분리 추천
+SPECIAL_QUESTIONS = [
+    "오늘 하루를 색깔로 표현한다면 어떤 색인가요?",
+    "오늘 하루가 영화라면 제목은 무엇인가요?",
+    "오늘 하루를 이모지 세 개로 표현한다면 무엇인가요?",
+    # ... 여기에 150개 질문 전체를 넣거나, 파일에서 로드
+]
 
-# 장르 점수 맵 (각 선택지 -> 6장르 가중치 + 숨은축)
-# 숨은축 키: "__social", "__imagination"
-SCORE_MAP = {
-    # Q1
-    "집에서 휴식": {"드라마": 1.0, "로맨스": 0.5, "__social": -0.6, "__imagination": 0.0},
-    "친구와 놀기": {"코미디": 1.0, "__social": +0.8, "__imagination": 0.0},
-    "새로운 곳 탐험": {"액션": 1.0, "판타지": 0.2, "__social": +0.2, "__imagination": +0.2},
-    "혼자 취미생활": {"SF": 0.8, "판타지": 0.6, "드라마": 0.2, "__social": -0.5, "__imagination": +0.7},
+# -------------------------
+# Utils: profile persistence
+# -------------------------
+def load_profile():
+    if os.path.exists(PROFILE_PATH):
+        with open(PROFILE_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return None
 
-    # Q2
-    "혼자 정리하는 시간이 필요": {"드라마": 0.8, "로맨스": 0.4, "__social": -0.7, "__imagination": 0.1},
-    "친구에게 얘기하며 푼다": {"코미디": 0.7, "로맨스": 0.3, "__social": +0.8, "__imagination": 0.0},
-    "몸을 움직이며 푼다": {"액션": 0.9, "__social": +0.2, "__imagination": 0.1},
-    "맛있는 걸 먹으며 기분 전환": {"코미디": 0.8, "드라마": 0.2, "__social": +0.2, "__imagination": 0.0},
+def save_profile(profile: dict):
+    os.makedirs(os.path.dirname(PROFILE_PATH), exist_ok=True)
+    with open(PROFILE_PATH, "w", encoding="utf-8") as f:
+        json.dump(profile, f, ensure_ascii=False, indent=2)
 
-    # Q3
-    "감동과 여운": {"드라마": 1.0, "로맨스": 0.7, "__social": 0.0, "__imagination": 0.0},
-    "박진감/스케일": {"액션": 1.0, "SF": 0.4, "__social": +0.2, "__imagination": +0.2},
-    "설정/아이디어": {"SF": 0.9, "판타지": 0.6, "__social": 0.0, "__imagination": +0.9},
-    "웃음 포인트": {"코미디": 1.0, "__social": +0.4, "__imagination": 0.0},
+def profile_display_line(p: dict) -> str:
+    parts = [p.get("name", "")]
+    if p.get("age") is not None:
+        parts.append(f"{p['age']}세")
+    if p.get("gender"):
+        parts.append(p["gender"])
+    if p.get("job"):
+        parts.append(p["job"])
+    return " · ".join([x for x in parts if x])
 
-    # Q4
-    "동선/일정을 꼼꼼히": {"드라마": 0.4, "SF": 0.3, "__social": -0.1, "__imagination": 0.2},
-    "대략만 정하고 현지에서": {"코미디": 0.6, "액션": 0.4, "__social": +0.2, "__imagination": 0.1},
-    "액티비티 위주로": {"액션": 1.0, "__social": +0.2, "__imagination": 0.0},
-    "힐링/맛집/산책 위주로": {"드라마": 0.8, "로맨스": 0.3, "__social": 0.0, "__imagination": 0.0},
+# -------------------------
+# App state init
+# -------------------------
+def init_state():
+    if "style_mode" not in st.session_state:
+        st.session_state.style_mode = "친한친구"
+    if "profile" not in st.session_state:
+        st.session_state.profile = load_profile()
+    if "editing_profile" not in st.session_state:
+        st.session_state.editing_profile = False
 
-    # Q5 (숨은 J/P 성향 느낌을 “티 안나게” 반영)
-    "미리미리 나눠서 해두는 편": {"드라마": 0.3, "SF": 0.3, "__social": -0.1, "__imagination": 0.2},
-    "마감이 다가와야 집중이 된다": {"액션": 0.3, "코미디": 0.3, "__social": +0.1, "__imagination": 0.0},
-    "일단 시작하고 흐름 타면 끝까지": {"액션": 0.4, "SF": 0.2, "__social": 0.0, "__imagination": 0.2},
-    "같이 할 사람을 모아 분위기 만들기": {"코미디": 0.6, "__social": +0.7, "__imagination": 0.0},
+    if "chat_started" not in st.session_state:
+        st.session_state.chat_started = False
+    if "step" not in st.session_state:
+        st.session_state.step = 0  # 0=대기, 1~6 질문, 7 완료
 
-    # Q6 (숨은 S/N + F/T 느낌을 “티 안나게” 반영)
-    "현실적으로 있을 법한 이야기": {"드라마": 0.7, "로맨스": 0.4, "__social": 0.0, "__imagination": -0.8},
-    "완전히 새로운 세계/규칙이 있는 이야기": {"SF": 0.7, "판타지": 0.7, "__social": 0.0, "__imagination": +1.0},
-    "관계/감정의 변화가 촘촘한 이야기": {"드라마": 0.8, "로맨스": 0.7, "__social": 0.1, "__imagination": -0.2},
-    "가벼운 텐션으로 즐기는 이야기": {"코미디": 0.8, "액션": 0.2, "__social": +0.3, "__imagination": 0.0},
+    if "today" not in st.session_state:
+        st.session_state.today = date.today().isoformat()
 
-    # Q7
-    "차분하고 믿음직하다": {"드라마": 0.6, "로맨스": 0.2, "__social": -0.2, "__imagination": 0.0},
-    "에너지가 있고 추진력이 있다": {"액션": 0.8, "코미디": 0.3, "__social": +0.5, "__imagination": 0.1},
-    "생각이 많고 독특한 편이다": {"SF": 0.6, "판타지": 0.5, "__social": -0.1, "__imagination": +0.6},
-    "분위기를 풀어주는 편이다": {"코미디": 0.9, "__social": +0.8, "__imagination": 0.0},
-}
+    if "special_q" not in st.session_state:
+        # 날짜 seed로 오늘 질문 고정
+        random.seed(st.session_state.today)
+        st.session_state.special_q = random.choice(SPECIAL_QUESTIONS)
 
+    if "answers" not in st.session_state:
+        st.session_state.answers = {}
 
-def build_profile(answers: dict):
-    # 장르 점수
-    scores = {k: 0.0 for k in GENRE_IDS.keys()}
-    # 숨은축
-    axes = {"__social": 0.0, "__imagination": 0.0}
+    if "chat_log" not in st.session_state:
+        st.session_state.chat_log = []
 
-    for _, choice in answers.items():
-        adds = SCORE_MAP.get(choice, {})
-        # 장르
-        add_scores(scores, {k: v for k, v in adds.items() if k in scores}, 1.0)
-        # 축
-        axes["__social"] += float(adds.get("__social", 0.0))
-        axes["__imagination"] += float(adds.get("__imagination", 0.0))
+init_state()
 
-    ranked = sorted(scores.items(), key=lambda x: x[1], reverse=True)
-    top1, top2 = ranked[0], ranked[1]
-    mix = (top1[1] - top2[1]) <= 0.8 and top2[1] > 0
+# -------------------------
+# Layout
+# -------------------------
+st.set_page_config(page_title=APP_TITLE, page_icon="🧶", layout="wide")
+st.title("🧶 Daily Weaver")
 
-    genre_names = [top1[0], top2[0]] if mix else [top1[0]]
-
-    # “MBTI 티 안나게” 설명용 라벨
-    social_label = "사람이랑 같이 즐기는 쪽" if axes["__social"] > 0.6 else ("혼자 몰입하는 쪽" if axes["__social"] < -0.6 else "상황 따라 유연한 편")
-    imag_label = "상상력/세계관 선호" if axes["__imagination"] > 0.6 else ("현실감/공감 선호" if axes["__imagination"] < -0.6 else "밸런스형")
-
-    summary = (
-        f"상위 장르: **{genre_names[0]}**" + (f", **{genre_names[1]}**" if mix else "")
-        + f" · 취향 톤: **{social_label}**, **{imag_label}**"
-    )
-    return scores, axes, genre_names, summary
-
-
-# =========================================================
-# OpenAI: 최종 1편 선택
-# =========================================================
-def openai_pick_one_movie(openai_api_key: str, profile_summary: str, candidates: list[dict]) -> dict:
-    instructions = (
-        "너는 사용자의 취향 요약을 바탕으로 후보 영화 중 단 1편을 고르는 큐레이터다.\n"
-        "반드시 후보 리스트 안에서만 선택해야 한다.\n"
-        "출력은 JSON만: {\"movie_id\": <number>, \"title\": \"...\", \"reason\": \"...\"}\n"
-        "reason는 2~3문장으로 간단히.\n"
-        "추가 텍스트 금지."
+# -------------------------
+# Sidebar
+# -------------------------
+with st.sidebar:
+    st.subheader("대화 스타일")
+    st.session_state.style_mode = st.radio(
+        "어떤 버전으로 이야기할까요?",
+        STYLE_MODES,
+        index=STYLE_MODES.index(st.session_state.style_mode),
+        label_visibility="collapsed",
     )
 
-    payload = {"profile_summary": profile_summary, "candidates": candidates}
+    st.divider()
+    st.subheader("내 프로필")
+    if st.session_state.profile:
+        st.caption(profile_display_line(st.session_state.profile))
+        if st.button("프로필 수정", use_container_width=True):
+            st.session_state.editing_profile = True
+    else:
+        st.caption("아직 프로필이 없어요.")
+        if st.button("프로필 입력", use_container_width=True):
+            st.session_state.editing_profile = True
 
-    body = {
-        "model": "gpt-5-mini",
-        "instructions": instructions,
-        "input": [{"role": "user", "content": json.dumps(payload, ensure_ascii=False)}],
-        "temperature": 0.3,
-        "max_output_tokens": 260,
-        "text": {"format": {"type": "text"}},
-    }
+    st.divider()
+    st.subheader("성장서사 보기")
+    tab_w, tab_m, tab_y = st.tabs(["주간", "월간", "연간"])
+    with tab_w:
+        st.caption("이번 주 요약(예시 UI)")
+        # TODO: 주간 선택 UI + 요약 출력
+    with tab_m:
+        st.caption("이번 달 요약(예시 UI)")
+        # TODO
+    with tab_y:
+        st.caption("올해 요약(예시 UI)")
+        # TODO
 
-    headers = {"Authorization": f"Bearer {openai_api_key}", "Content-Type": "application/json"}
-    r = requests.post(OPENAI_RESPONSES_URL, headers=headers, json=body, timeout=30)
-    r.raise_for_status()
-    data = r.json()
+# -------------------------
+# Onboarding / Profile modal-ish
+# -------------------------
+def render_profile_form():
+    st.markdown("### Daily Weaver에 오신 걸 환영해요")
+    st.write("처음 한 번만 간단히 알려주면, 매일 기록이 더 자연스럽고 디테일해져요. 언제든 수정할 수 있어요.")
+    st.info("프로필은 이 기기(로컬)에 저장되며, 원하면 언제든 지울 수 있어요.", icon="🔒")
 
-    out_text = ""
-    for item in data.get("output", []) or []:
-        if item.get("type") == "message":
-            for c in item.get("content", []) or []:
-                if c.get("type") == "output_text":
-                    out_text += c.get("text", "")
+    with st.form("profile_form", clear_on_submit=False):
+        name = st.text_input("이름", value=(st.session_state.profile.get("name") if st.session_state.profile else ""))
+        age = st.number_input("나이", min_value=0, max_value=120, value=int(st.session_state.profile.get("age", 20)) if st.session_state.profile else 20)
+        gender = st.selectbox("성별", ["선택 안 함", "여성", "남성", "논바이너리", "기타"], index=0)
+        job = st.text_input("직업", value=(st.session_state.profile.get("job") if st.session_state.profile else ""))
 
-    out_text = (out_text or "").strip()
+        col1, col2 = st.columns(2)
+        submitted = col1.form_submit_button("저장", use_container_width=True)
+        cancel = col2.form_submit_button("취소", use_container_width=True)
 
-    try:
-        return json.loads(out_text)
-    except Exception:
-        l = out_text.find("{")
-        rpos = out_text.rfind("}")
-        if l != -1 and rpos != -1 and rpos > l:
-            try:
-                return json.loads(out_text[l : rpos + 1])
-            except Exception:
-                pass
+    if cancel:
+        st.session_state.editing_profile = False
+        st.rerun()
 
-    return {"movie_id": candidates[0]["id"], "title": candidates[0]["title"], "reason": "후보 중에서 전반적으로 취향 적합도와 대중 평가가 좋아 보여요."}
+    if submitted:
+        profile = {
+            "name": name.strip() or "사용자",
+            "age": int(age),
+            "gender": "" if gender == "선택 안 함" else gender,
+            "job": job.strip(),
+        }
+        save_profile(profile)
+        st.session_state.profile = profile
+        st.session_state.editing_profile = False
+        st.success("저장했어요. 이제 오늘 기록을 시작해볼까요?")
+        st.rerun()
 
+# If no profile yet or editing, show onboarding and stop
+if (st.session_state.profile is None) or st.session_state.editing_profile:
+    render_profile_form()
+    st.stop()
 
-# =========================================================
-# Rerank
-# =========================================================
-def rerank_movies(candidates: list[dict], user_genre_names: list[str]):
-    votes = [float(m.get("vote_average") or 0.0) for m in candidates]
-    pops = [float(m.get("popularity") or 0.0) for m in candidates]
-    vcnt = [float(m.get("vote_count") or 0.0) for m in candidates]
-    log_vcnt = [math.log(1 + x) for x in vcnt]
+# -------------------------
+# Main: chat start + step flow
+# -------------------------
+def push_app(msg: str):
+    st.session_state.chat_log.append({"role": "app", "content": msg})
 
-    nv = normalize(votes)
-    npop = normalize(pops)
-    nlog = normalize(log_vcnt)
+def push_user(msg: str):
+    st.session_state.chat_log.append({"role": "user", "content": msg})
 
-    user_genre_ids = {GENRE_IDS[g] for g in user_genre_names if g in GENRE_IDS}
+# Greeting (shown once)
+if not st.session_state.chat_started and st.session_state.step == 0:
+    p = st.session_state.profile
+    st.info(f"{p.get('name','')}님, 오늘 기록을 시작하려면 한마디만 걸어주세요. 예: 시작하자", icon="🧶")
 
-    scored = []
-    for i, m in enumerate(candidates):
-        g_ids = set(m.get("genre_ids") or [])
-        match = len(g_ids & user_genre_ids)
-        match_bonus = 0.10 * match
+# Chat input trigger
+user_msg = st.chat_input("여기에 한마디를 입력해 시작하세요")
+if user_msg and not st.session_state.chat_started:
+    st.session_state.chat_started = True
+    st.session_state.step = 1
+    push_user(user_msg)
 
-        score = 0.55 * nv[i] + 0.25 * nlog[i] + 0.20 * npop[i] + match_bonus
-        scored.append((score, m))
+    # style-based greeting (lightweight)
+    name = st.session_state.profile.get("name", "사용자")
+    if st.session_state.style_mode == "공식적":
+        push_app(f"{name}님, 오늘의 기록을 시작하겠습니다.")
+    elif st.session_state.style_mode == "반려동물":
+        push_app(f"{name}님, 오늘도 만나서 반가워요 🐾 기록을 시작해볼까요.")
+    else:
+        push_app(f"{name}님, 오늘도 수고 많았어요. 이제 천천히 기록해볼까요.")
+    st.rerun()
 
-    scored.sort(key=lambda x: x[0], reverse=True)
-    return [m for _, m in scored]
-
-
-# =========================================================
-# Render questions
-# =========================================================
-answers = {}
-for q, opts in questions:
-    answers[q] = st.radio(q, opts, key=q)
+# Render chat log
+for m in st.session_state.chat_log:
+    with st.chat_message("assistant" if m["role"] == "app" else "user"):
+        st.write(m["content"])
 
 st.divider()
 
+# Step UIs
+step = st.session_state.step
 
-# =========================================================
-# Result
-# =========================================================
-if st.button("결과 보기"):
-    if not tmdb_key:
-        st.error("사이드바에 TMDB API Key를 입력해주세요.")
-        st.stop()
-    if not openai_key:
-        st.error("사이드바에 OpenAI API Key를 입력해주세요.")
-        st.stop()
+def next_step():
+    st.session_state.step += 1
+    st.rerun()
 
-    # 1) 분석
-    with st.spinner("분석 중..."):
-        scores, axes, genre_names, profile_summary = build_profile(answers)
+if st.session_state.chat_started and step == 1:
+    if "q1_shown" not in st.session_state:
+        push_app("오늘의 기분은 어떤가요. 아래 이모티콘 중 가장 가까운 것을 골라주세요.")
+        st.session_state.q1_shown = True
+        st.rerun()
 
-    with_genres = ",".join(str(GENRE_IDS[g]) for g in genre_names if g in GENRE_IDS)
+    c1, c2 = st.columns(2)
+    with c1:
+        st.caption("얼굴")
+        face_choice = st.radio("face", [f"{e} {t}" for e, t in EMOJI_FACE], label_visibility="collapsed")
+    with c2:
+        st.caption("상징")
+        sym_choice = st.radio("symbol", [f"{e} {t}" for e, t in EMOJI_SYMBOL], label_visibility="collapsed")
 
-    # 2) 제작 대륙 -> with_origin_country
-    origin_countries = CONTINENT_TO_COUNTRIES.get(continent, [])
-    with_origin_country = "|".join(origin_countries) if origin_countries else None
+    st.caption("추천: 얼굴 1개와 상징 1개를 모두 선택해 주세요.")
+    if st.button("다음", type="primary"):
+        st.session_state.answers["emoji_face"] = face_choice.split(" ")[0]
+        st.session_state.answers["emoji_symbol"] = sym_choice.split(" ")[0]
+        next_step()
 
-    # 3) OTT 필터
-    with_watch_providers = str(selected_provider_id) if selected_provider_id else None
-    with_watch_monetization_types = "flatrate" if selected_provider_id else None
+elif st.session_state.chat_started and step == 2:
+    if "q2_shown" not in st.session_state:
+        push_app("오늘 하루는 무엇으로 채워졌나요. 해당하는 항목을 체크해 주세요.")
+        st.session_state.q2_shown = True
+        st.rerun()
 
-    # 4) 추천 기준
-    if rec_mode.startswith("평점"):
-        sort_by = "vote_average.desc"
-    elif rec_mode.startswith("인기"):
-        sort_by = "popularity.desc"
+    colA, colB = st.columns(2)
+    with colA:
+        st.caption("감정(복수 선택)")
+        emotions = st.multiselect("emotions", EMOTION_CHECKS, label_visibility="collapsed")
+    with colB:
+        st.caption("행동(복수 선택)")
+        acts = st.multiselect("acts", ACTIVITY_CHECKS, label_visibility="collapsed")
+
+    if st.button("다음", type="primary"):
+        st.session_state.answers["emotion_checks"] = emotions
+        st.session_state.answers["activity_checks"] = acts
+        next_step()
+
+elif st.session_state.chat_started and step == 3:
+    if "q3_shown" not in st.session_state:
+        push_app("오늘 하루를 한 단어로 표현한다면 무엇인가요.")
+        st.session_state.q3_shown = True
+        st.rerun()
+
+    one_word = st.text_input("한 단어", placeholder="예: 버팀, 리셋, 흐림, 반짝임")
+    if st.button("다음", type="primary"):
+        st.session_state.answers["one_word"] = one_word.strip()
+        next_step()
+
+elif st.session_state.chat_started and step == 4:
+    if "q4_shown" not in st.session_state:
+        push_app("오늘 가장 기억에 남는 순간은 무엇인가요. 떠오르는 장면을 자유롭게 적어주세요.")
+        st.session_state.q4_shown = True
+        st.rerun()
+
+    best = st.text_area("기억에 남는 순간", height=160)
+    if st.button("다음", type="primary"):
+        st.session_state.answers["best_moment"] = best.strip()
+        next_step()
+
+elif st.session_state.chat_started and step == 5:
+    if "q5_shown" not in st.session_state:
+        push_app("오늘 새롭게 배우거나 성장한 점이 있나요. 작은 깨달음이어도 괜찮아요.")
+        st.session_state.q5_shown = True
+        st.rerun()
+
+    growth = st.text_area("성장한 점", height=160)
+    if st.button("다음", type="primary"):
+        st.session_state.answers["growth"] = growth.strip()
+        next_step()
+
+elif st.session_state.chat_started and step == 6:
+    if "q6_shown" not in st.session_state:
+        push_app(f"오늘의 스페셜 질문이에요. {st.session_state.special_q}")
+        st.session_state.q6_shown = True
+        st.rerun()
+
+    special_a = st.text_area("답변", height=140)
+    if st.button("마무리", type="primary"):
+        st.session_state.answers["special_q"] = st.session_state.special_q
+        st.session_state.answers["special_answer"] = special_a.strip()
+        next_step()
+
+elif st.session_state.chat_started and step == 7:
+    # Closing message (template MVP)
+    p = st.session_state.profile
+    a = st.session_state.answers
+
+    name = p.get("name", "사용자")
+    one_word = a.get("one_word", "").strip()
+    best = a.get("best_moment", "").strip()
+    growth = a.get("growth", "").strip()
+
+    if st.session_state.style_mode == "공식적":
+        closing = f"{name}님, 오늘 기록을 마쳤습니다. 오늘의 핵심 단어는 '{one_word}'였고, 가장 인상 깊은 순간은 '{best[:40]}...'입니다. 오늘의 배움으로 '{growth[:40]}...'을 남겨주신 점이 좋습니다."
+    elif st.session_state.style_mode == "반려동물":
+        closing = f"{name}님, 오늘도 정말 수고했어요 🐾 '{one_word}' 같은 하루였고, '{best[:40]}...' 장면이 마음에 남아요. '{growth[:40]}...' 이 기록은 내일의 {name}님을 더 편하게 해줄 거예요."
     else:
-        # 최신/연도 중심: 연도 필터 + 최신 정렬
-        sort_by = "primary_release_date.desc"
+        closing = f"{name}님, 오늘은 '{one_word}'라는 단어가 잘 어울리는 날이었어요. 특히 '{best[:50]}...' 그 순간이 오래 남을 것 같아요. 오늘도 수고 많았고, '{growth[:50]}...'을 적어둔 것만으로도 충분히 멋져요."
 
-    # 연도 범위
-    # discover 파라미터는 release_date.gte / lte 를 지원하는 편이라 이쪽 사용
-    date_gte = f"{min(year_from, year_to)}-01-01"
-    date_lte = f"{max(year_from, year_to)}-12-31"
+    push_app(closing)
 
-    # 5) 후보 수집
-    seed = st.session_state.seed
-    rng = random.Random(seed)
-    base_page = rng.randint(1, 5) if diversify else 1
+    # Song recommendation (MVP: curated tag -> search link)
+    # 아주 단순: 감정/행동 기반으로 키워드 정해서 검색 링크
+    mood_hint = (a.get("emoji_symbol") or "") + " " + (one_word or "")
+    query = quote(mood_hint.strip() or "lofi chill")
+    spotify_url = f"https://open.spotify.com/search/{query}"
 
-    candidates = []
-    with st.spinner("TMDB에서 후보 영화를 찾는 중..."):
-        try:
-            for k in range(fetch_pages):
-                page = base_page + k
+    with st.chat_message("assistant"):
+        st.write("오늘의 추천곡을 골라봤어요.")
+        st.markdown(f"[Spotify에서 열기]({spotify_url})")
 
-                params = {
-                    "api_key": tmdb_key,
-                    "language": LANGUAGE,
-                    "with_genres": with_genres,
-                    "include_adult": include_adult,
-                    "sort_by": sort_by,
-                    "page": page,
-                }
-
-                # 평점 중심이면 표본 필터
-                if sort_by.startswith("vote_average") and min_vote_count > 0:
-                    params["vote_count.gte"] = min_vote_count
-
-                # 연도 중심이면 연도 범위를 적극 적용
-                if rec_mode.startswith("최신") or rec_mode.startswith("인기") or rec_mode.startswith("평점"):
-                    # 연도 범위는 언제나 적용(사용자 요구: 연도별로 추천 옵션 포함)
-                    params["primary_release_date.gte"] = date_gte
-                    params["primary_release_date.lte"] = date_lte
-
-                # 제작 대륙 필터
-                if with_origin_country:
-                    params["with_origin_country"] = with_origin_country
-
-                # OTT 필터(한국 기준)
-                if with_watch_providers:
-                    params["watch_region"] = WATCH_REGION
-                    params["with_watch_providers"] = with_watch_providers
-                    params["with_watch_monetization_types"] = with_watch_monetization_types
-
-                data = tmdb_discover(params)
-                candidates.extend(data.get("results") or [])
-
-        except requests.HTTPError as e:
-            st.error(f"TMDB 요청 실패: {e}")
-            st.stop()
-        except requests.RequestException as e:
-            st.error(f"네트워크 오류: {e}")
-            st.stop()
-
-    # 중복 제거
-    uniq = {}
-    for m in candidates:
-        mid = m.get("id")
-        if mid is not None:
-            uniq[mid] = m
-    candidates = list(uniq.values())
-
-    if not candidates:
-        st.info("조건에 맞는 영화가 없어요. (OTT/대륙/연도/투표수 조건을 완화해보세요)")
-        st.stop()
-
-    # 6) 리랭킹 + 상위 N개
-    reranked = rerank_movies(candidates, genre_names)
-    movies = reranked[:max_movies]
-
-    # =========================================================
-    # Result UI
-    # =========================================================
-    st.markdown(f"## ✨ 당신에게 딱인 장르는: **{genre_names[0]}**!")
-    if len(genre_names) >= 2:
-        st.caption(f"취향이 섞여 보여서 **{genre_names[0]} + {genre_names[1]}** 조합으로 추천했어요.")
-    st.write(f"**분석 요약:** {profile_summary}")
-
-    st.caption(
-        "장르 점수: "
-        + " · ".join([f"{g}={scores[g]:.1f}" for g in ["드라마", "로맨스", "액션", "코미디", "SF", "판타지"]])
-    )
-
-    applied = [f"with_genres={with_genres}", f"sort_by={sort_by}", f"years={year_from}-{year_to}"]
-    if with_origin_country:
-        applied.append(f"continent={continent}")
-    if with_watch_providers:
-        applied.append(f"OTT={ott_choice} (provider_id={with_watch_providers})")
-    st.caption("적용 필터: " + " | ".join(applied))
-
-    # =========================================================
-    # LLM 최종 1편 선정 (후보 카드 중에서만)
-    # =========================================================
-    llm_candidates = []
-    with st.spinner("LLM이 최종 1편을 고르는 중..."):
-        for m in movies:
-            llm_candidates.append(
-                {
-                    "id": int(m.get("id")),
-                    "title": m.get("title") or "",
-                    "overview": (m.get("overview") or "")[:800],
-                    "vote_average": float(m.get("vote_average") or 0.0),
-                    "vote_count": int(m.get("vote_count") or 0),
-                    "release_date": m.get("release_date") or "",
-                }
-            )
-
-        try:
-            pick = openai_pick_one_movie(openai_key, profile_summary, llm_candidates)
-        except Exception:
-            pick = {"movie_id": llm_candidates[0]["id"], "title": llm_candidates[0]["title"], "reason": "후보 중에서 전반적으로 취향 적합도와 평가가 좋아 보여요."}
-
-    picked_id = pick.get("movie_id")
-    picked_title = pick.get("title", "")
-    picked_reason = pick.get("reason", "")
-
-    st.success(f"🎯 LLM 최종 추천: **{picked_title}**")
-    st.write(picked_reason)
-
-    st.divider()
-    st.subheader("🍿 추천 후보 영화 (3열 카드)")
-
-    cols = st.columns(3, gap="large")
-    for i, m in enumerate(movies):
-        col = cols[i % 3]
-        movie_id = int(m.get("id"))
-        title = m.get("title") or "제목 정보 없음"
-        rating = float(m.get("vote_average") or 0.0)
-        purl = poster_url(m.get("poster_path"))
-        is_final = (picked_id == movie_id)
-
-        with col:
-            if purl:
-                st.image(purl, use_container_width=True)
-            else:
-                st.info("포스터 없음")
-
-            st.markdown(f"### ⭐ **{title}**" if is_final else f"**{title}**")
-            st.write(f"⭐ 평점: **{rating:.1f}** / 10")
-
-            with st.expander("상세 보기"):
-                overview = m.get("overview") or "줄거리 정보가 없어요."
-                release_date = m.get("release_date") or None
-
-                try:
-                    detail = tmdb_movie_detail(tmdb_key, movie_id, LANGUAGE)
-                    overview = detail.get("overview") or overview
-                    release_date = detail.get("release_date") or release_date
-                    runtime = detail.get("runtime")
-                    genres = detail.get("genres") or []
-                    genres_text = ", ".join(g.get("name", "") for g in genres if g.get("name")) if genres else None
-                except Exception:
-                    runtime = None
-                    genres_text = None
-
-                st.write(overview)
-                meta = []
-                if release_date:
-                    meta.append(f"개봉일: {release_date}")
-                if runtime:
-                    meta.append(f"러닝타임: {runtime}분")
-                if genres_text:
-                    meta.append(f"장르: {genres_text}")
-                if meta:
-                    st.caption(" · ".join(meta))
-
-                if is_final:
-                    st.markdown("**LLM이 이 영화를 고른 이유**")
-                    st.write(picked_reason)
-
-    st.divider()
-    st.caption("💡 OTT 선택 후 결과가 적으면, 연도 범위를 넓히거나 최소 투표 수를 낮춰보세요.")
+    st.caption("다음 단계: 추천곡을 ‘곡명+아티스트’로 큐레이션하고, Spotify API로 track 링크를 정확히 붙일 수 있어요.")
