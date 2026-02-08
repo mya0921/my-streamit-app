@@ -61,7 +61,7 @@ SPECIAL_QUESTIONS = [
     "오늘 가장 나답다고 느낀 순간은 언제였나요?",
     "오늘의 나에게 점수를 준다면 몇 점인가요?",
     "오늘은 어떤 감정이 가장 오래 머물렀나요?",
-    "오늘 내가 가장 잘한 선택은 무엇이었나요?",
+    "오늘 내가 가장 잘한 선택은 무엇인가요?",
     "오늘 하루가 한 장의 사진이라면 어떤 장면인가요?",
     "오늘의 나는 어떤 날씨 같았나요?",
     "오늘 내 마음을 가장 잘 표현하는 노래 제목은 무엇인가요?",
@@ -130,7 +130,7 @@ SONGS = {
 
 
 # =========================
-# CSS (iMessage + Apple Music)
+# CSS (iMessage + Apple Music + iOS Sidebar)
 # =========================
 def inject_css():
     st.markdown(
@@ -168,34 +168,47 @@ def inject_css():
                "Apple SD Gothic Neo", "Pretendard", "Noto Sans KR", Segoe UI, Roboto, Helvetica, Arial, sans-serif;
 }
 
-/* content area */
 .main .block-container{
   max-width: 980px;
   padding-top: 1.1rem;
-  padding-bottom: 6.2rem; /* composer fixed 공간 */
+  padding-bottom: 6.2rem;
 }
 
-/* sidebar glass */
+/* Sidebar glass */
 section[data-testid="stSidebar"]{
-  background: rgba(255,255,255,0.58) !important;
-  backdrop-filter: blur(22px);
-  -webkit-backdrop-filter: blur(22px);
+  background: rgba(255,255,255,0.62) !important;
+  backdrop-filter: blur(26px);
+  -webkit-backdrop-filter: blur(26px);
   border-right: 1px solid rgba(60,60,67,0.10) !important;
 }
-section[data-testid="stSidebar"] .block-container{ padding-top: 1.1rem; }
+section[data-testid="stSidebar"] .block-container{
+  padding-top: 1.1rem;
+}
 section[data-testid="stSidebar"] h3{
-  font-size: 14px !important;
+  font-size: 13px !important;
   font-weight: 900 !important;
   letter-spacing: -0.2px;
-  color: rgba(60,60,67,0.92);
-  margin-bottom: 0.6rem;
+  color: rgba(60,60,67,0.88);
+  margin-bottom: 0.55rem;
 }
-section[data-testid="stSidebar"] hr{
-  border: none;
-  height: 1px;
-  background: rgba(60,60,67,0.10);
-  margin: 0.9rem 0;
+
+/* Sidebar cards like iOS Settings */
+.dw-side-card{
+  padding: 12px 12px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.62);
+  border: 1px solid rgba(60,60,67,0.10);
+  box-shadow: 0 14px 28px rgba(0,0,0,0.06);
+  margin-bottom: 12px;
 }
+.dw-side-title{
+  font-size: 12px;
+  font-weight: 900;
+  color: rgba(60,60,67,0.72);
+  margin-bottom: 8px;
+}
+
+/* radio group */
 section[data-testid="stSidebar"] div[role="radiogroup"]{
   padding: 8px 10px;
   border-radius: 16px;
@@ -244,35 +257,27 @@ section[data-testid="stSidebar"] div[role="radiogroup"] label:hover{
   color: rgba(60,60,67,0.72);
   margin: 2px 0 0 0;
 }
-.dw-chip-row{
-  margin-top: 10px;
-  display:flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.dw-chip{
-  display:inline-block;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(247,182,200,0.55);
-  background: rgba(247,182,200,0.14);
-  font-size: 12px;
-  font-weight: 900;
-  color: rgba(60,60,67,0.92);
-}
 
-/* Tabs pink */
+/* growth tab styling */
+.stTabs [data-baseweb="tab-list"]{
+  background: rgba(255,255,255,0.45);
+  border-radius: 16px;
+  padding: 4px;
+  border: 1px solid rgba(60,60,67,0.10);
+}
+.stTabs [data-baseweb="tab-list"] button{
+  border-radius: 14px !important;
+}
 .stTabs [data-baseweb="tab-list"] button[aria-selected="true"]{
   color: rgba(244,143,177,1) !important;
+  font-weight: 900 !important;
 }
 .stTabs [data-baseweb="tab-highlight"]{
   background-color: rgba(244,143,177,1) !important;
 }
 
 /* header */
-.dw-header{
-  margin: 0 0 10px 0;
-}
+.dw-header{ margin: 0 0 10px 0; }
 .dw-title{
   font-size: 30px;
   font-weight: 900;
@@ -286,10 +291,8 @@ section[data-testid="stSidebar"] div[role="radiogroup"] label:hover{
   line-height: 1.5;
 }
 
-/* chat */
-.dw-chat{
-  padding: 12px 8px;
-}
+/* chat bubbles */
+.dw-chat{ padding: 12px 8px; }
 .dw-row{ display:flex; margin: 10px 0; }
 .dw-row.them{ justify-content:flex-start; }
 .dw-row.you{ justify-content:flex-end; }
@@ -345,16 +348,16 @@ section[data-testid="stSidebar"] div[role="radiogroup"] label:hover{
   transform: rotate(45deg);
 }
 
-/* fixed composer (iMessage style) */
+/* fixed composer */
 .dw-fixed-composer{
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
   padding: 14px 18px 18px 18px;
-  background: rgba(245,245,247,0.70);
-  backdrop-filter: blur(22px);
-  -webkit-backdrop-filter: blur(22px);
+  background: rgba(245,245,247,0.72);
+  backdrop-filter: blur(26px);
+  -webkit-backdrop-filter: blur(26px);
   border-top: 1px solid rgba(60,60,67,0.12);
   z-index: 9999;
 }
@@ -365,14 +368,9 @@ section[data-testid="stSidebar"] div[role="radiogroup"] label:hover{
   gap: 10px;
   align-items:flex-end;
 }
-.dw-fixed-hint{
-  font-size: 12px;
-  color: rgba(60,60,67,0.65);
-  margin: 0 0 8px 4px;
-}
 
-/* textarea message bar */
-.dw-msgbox textarea{
+/* message textarea */
+.stTextArea textarea{
   border-radius: 20px !important;
   border: 1px solid rgba(60,60,67,0.16) !important;
   background: rgba(255,255,255,0.96) !important;
@@ -381,20 +379,13 @@ section[data-testid="stSidebar"] div[role="radiogroup"] label:hover{
   max-height: 120px !important;
   box-shadow: 0 1px 0 rgba(0,0,0,0.03);
 }
-
-/* primary send button */
-.dw-send button{
-  width: 56px !important;
-  height: 48px !important;
-  border-radius: 16px !important;
-  background: linear-gradient(180deg, rgba(251,225,232,1) 0%, rgba(247,200,214,1) 100%) !important;
-  border: none !important;
-  box-shadow: 0 14px 26px rgba(244,143,177,0.18) !important;
-  font-weight: 900 !important;
-  color: #111 !important;
+.stTextArea textarea:focus{
+  outline: none !important;
+  border-color: rgba(247,182,200,0.65) !important;
+  box-shadow: 0 0 0 4px var(--accent-soft) !important;
 }
 
-/* form submit primary */
+/* send button */
 button[kind="primary"],
 div[data-testid="stFormSubmitButton"] button{
   background: linear-gradient(180deg, rgba(251,225,232,1) 0%, rgba(247,200,214,1) 100%) !important;
@@ -406,48 +397,32 @@ div[data-testid="stFormSubmitButton"] button{
   box-shadow: 0 12px 26px rgba(244,143,177,0.18) !important;
 }
 
-/* inputs */
-.stTextInput input,
-.stNumberInput input,
-.stTextArea textarea,
-.stMultiSelect div[data-baseweb="select"] > div,
-.stSelectbox div[data-baseweb="select"] > div{
-  border-radius: 16px !important;
-  border: 1px solid rgba(60,60,67,0.18) !important;
-  background: rgba(255,255,255,0.92) !important;
-}
-.stTextArea textarea:focus{
-  outline: none !important;
-  border-color: rgba(247,182,200,0.65) !important;
-  box-shadow: 0 0 0 4px var(--accent-soft) !important;
-}
-
-/* Apple Music style card inside bubble */
+/* Apple Music card (compact) */
 .dw-music-wrap{
-  margin-top: 12px;
-  padding-top: 12px;
+  margin-top: 10px;
+  padding-top: 10px;
   border-top: 1px solid rgba(60,60,67,0.10);
 }
 .dw-music-card{
   display:flex;
-  gap: 14px;
+  gap: 12px;
   align-items:center;
-  padding: 10px;
+  padding: 8px;
   border-radius: 18px;
   border: 1px solid rgba(60,60,67,0.12);
   background: rgba(255,255,255,0.90);
-  box-shadow: 0 12px 26px rgba(0,0,0,0.08);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.07);
 }
 .dw-cover{
-  width: 132px;
-  height: 132px;
+  width: 118px;
+  height: 118px;
   border-radius: 18px;
   object-fit: cover;
   border: 1px solid rgba(60,60,67,0.12);
-  box-shadow: 0 14px 26px rgba(0,0,0,0.10);
+  box-shadow: 0 12px 22px rgba(0,0,0,0.10);
 }
 .dw-music-title{
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 900;
   margin: 0;
   letter-spacing: -0.2px;
@@ -457,42 +432,6 @@ div[data-testid="stFormSubmitButton"] button{
   color: rgba(60,60,67,0.70);
   margin: 4px 0 0 0;
 }
-
-/* Apple Music player row */
-.dw-player-row{
-  margin-top: 10px;
-  display:flex;
-  align-items:center;
-  justify-content: space-between;
-  gap: 10px;
-}
-.dw-player-btn{
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background: rgba(247,182,200,0.18);
-  border: 1px solid rgba(247,182,200,0.38);
-  box-shadow: 0 10px 18px rgba(244,143,177,0.10);
-  font-size: 14px;
-}
-.dw-progress{
-  flex: 1;
-  height: 7px;
-  border-radius: 999px;
-  background: rgba(60,60,67,0.10);
-  overflow: hidden;
-}
-.dw-progress-fill{
-  height: 100%;
-  width: 46%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, rgba(247,182,200,0.55), rgba(244,143,177,0.95));
-}
-
-/* Spotify open row */
 .dw-open-row{
   margin-top: 10px;
   display:flex;
@@ -792,7 +731,7 @@ def push_user(msg: str):
 
 
 # =========================
-# iMessage-style renderer
+# iMessage renderer
 # =========================
 def render_chat():
     st.markdown('<div class="dw-chat">', unsafe_allow_html=True)
@@ -813,6 +752,11 @@ def render_chat():
     st.markdown("</div>", unsafe_allow_html=True)
 
 
+def next_step():
+    st.session_state.step += 1
+    st.rerun()
+
+
 # =========================
 # 선택 UI
 # =========================
@@ -828,10 +772,6 @@ def choose_multi_pills(label: str, options: list[str], key: str):
     else:
         return st.multiselect(label, options, default=st.session_state.get(key, []), key=key, label_visibility="collapsed")
 
-def next_step():
-    st.session_state.step += 1
-    st.rerun()
-
 
 # =========================
 # 앱 시작
@@ -842,10 +782,12 @@ init_state()
 
 
 # =========================
-# Sidebar
+# Sidebar (iOS 카드형 구성)
 # =========================
 with st.sidebar:
-    st.subheader("대화 스타일")
+    st.markdown('<div class="dw-side-card">', unsafe_allow_html=True)
+    st.markdown('<div class="dw-side-title">대화 스타일</div>', unsafe_allow_html=True)
+
     current_label = f"{STYLE_EMOJI[st.session_state.style_mode]} {st.session_state.style_mode}"
     idx = STYLE_OPTIONS.index(current_label) if current_label in STYLE_OPTIONS else 0
     chosen_label = st.radio(
@@ -855,9 +797,10 @@ with st.sidebar:
         label_visibility="collapsed",
     )
     st.session_state.style_mode = chosen_label.split(" ", 1)[1]
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    st.divider()
-    st.subheader("내 프로필")
+    st.markdown('<div class="dw-side-card">', unsafe_allow_html=True)
+    st.markdown('<div class="dw-side-title">내 프로필</div>', unsafe_allow_html=True)
 
     prof = st.session_state.profile or {}
     name = prof.get("name", "사용자")
@@ -892,8 +835,11 @@ with st.sidebar:
         st.session_state.show_onboarding = True
         st.rerun()
 
-    st.divider()
-    st.subheader("성장서사 보기")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown('<div class="dw-side-card">', unsafe_allow_html=True)
+    st.markdown('<div class="dw-side-title">성장서사 보기</div>', unsafe_allow_html=True)
+
     all_entries = read_entries()
     wtab, mtab, ytab = st.tabs(["주간", "월간", "연간"])
     with wtab:
@@ -902,6 +848,8 @@ with st.sidebar:
         show_growth_summary(filter_entries_last_days(all_entries, 30), "이번 달 성장서사")
     with ytab:
         show_growth_summary(filter_entries_last_days(all_entries, 365), "올해 성장서사")
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 # =========================
@@ -992,29 +940,21 @@ if not st.session_state.chat_started and st.session_state.step == 0:
 
 
 # =========================
-# Step UI (composer content)
+# Step flow
 # =========================
 step = st.session_state.step
 a = st.session_state.answers
 
 
-def handle_user_send(text: str):
-    if not text.strip():
-        return
-    push_user(text.strip())
-
-
 # =========================
-# Fixed Composer (iMessage)
+# Fixed Composer
 # =========================
 st.markdown('<div class="dw-fixed-composer">', unsafe_allow_html=True)
 st.markdown('<div class="dw-fixed-inner">', unsafe_allow_html=True)
 
 if step == 1:
-    # mood pills + send
     options = [f"{e} {t}" for e, t in EMOJI_OPTIONS]
     chosen = choose_single_pills("mood", options, key="mood_choice")
-
     st.markdown("</div>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -1026,7 +966,6 @@ if step == 1:
 
 elif step == 2:
     selected = choose_multi_pills("activities", ACTIVITIES, key="activity_choice")
-
     st.markdown("</div>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -1117,7 +1056,7 @@ else:
 
 
 # =========================
-# Final step: Music bubble push
+# Final: music bubble
 # =========================
 if step == 7:
     profile = st.session_state.profile or {}
@@ -1168,14 +1107,6 @@ if step == 7:
     <div style="flex:1;">
       <p class="dw-music-title">{song["title"]}</p>
       <p class="dw-music-artist">{song["artist"]}</p>
-
-      <div class="dw-player-row">
-        <div class="dw-player-btn">▶︎</div>
-        <div class="dw-progress">
-          <div class="dw-progress-fill"></div>
-        </div>
-        <div class="dw-player-btn">⏭</div>
-      </div>
 
       <div class="dw-open-row">
         <div class="dw-open-text">Spotify에서 바로 감상하기</div>
