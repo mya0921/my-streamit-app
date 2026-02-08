@@ -99,7 +99,7 @@ TAG_LABEL = {
 
 
 # =========================
-# 스타일(CSS): iMessage-like bubbles + iOS clean
+# 스타일(CSS): iMessage-like bubbles + 연핑크 통일 + "흰 박스" 제거
 # =========================
 def inject_css():
     st.markdown(
@@ -111,25 +111,26 @@ def inject_css():
   --muted: rgba(60,60,67,0.72);
   --hairline: rgba(60,60,67,0.12);
 
-  /* accent */
+  /* Pink theme */
   --accent: #F7B6C8;
   --accent-strong: #F48FB1;
+  --accent-soft: rgba(247,182,200,0.18);
 
-  /* iMessage bubbles */
+  /* Bubbles */
   --bubble-you: linear-gradient(180deg, rgba(247,182,200,1) 0%, rgba(244,143,177,1) 100%);
   --bubble-you-text: #111;
-  --bubble-them: #FFFFFF;
+  --bubble-them: rgba(255,255,255,0.96);
   --bubble-them-text: #111;
-  --bubble-shadow: 0 10px 26px rgba(0,0,0,0.08);
 
+  --bubble-shadow: 0 10px 26px rgba(0,0,0,0.08);
   --radius: 20px;
-  --radius-small: 14px;
 }
 
 .stApp{
-  background: radial-gradient(1200px 700px at 20% -10%, rgba(247,182,200,0.24) 0%, rgba(245,245,247,0) 60%),
-              radial-gradient(900px 600px at 95% 10%, rgba(247,182,200,0.16) 0%, rgba(245,245,247,0) 55%),
-              var(--bg) !important;
+  background:
+    radial-gradient(1100px 700px at 15% -10%, rgba(247,182,200,0.26) 0%, rgba(245,245,247,0) 60%),
+    radial-gradient(900px 600px at 98% 12%, rgba(247,182,200,0.18) 0%, rgba(245,245,247,0) 55%),
+    var(--bg) !important;
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
                "Apple SD Gothic Neo", "Pretendard", "Noto Sans KR", Segoe UI, Roboto, Helvetica, Arial, sans-serif;
@@ -137,10 +138,11 @@ def inject_css():
 
 .main .block-container{
   max-width: 980px;
-  padding-top: 1.4rem;
-  padding-bottom: 2.8rem;
+  padding-top: 1.3rem;
+  padding-bottom: 2.6rem;
 }
 
+/* Sidebar glass */
 section[data-testid="stSidebar"]{
   background: rgba(255,255,255,0.70) !important;
   backdrop-filter: blur(18px);
@@ -148,10 +150,8 @@ section[data-testid="stSidebar"]{
   border-right: 1px solid var(--hairline) !important;
 }
 
-/* Title area (no white card) */
-.dw-header{
-  margin: 0 0 10px 0;
-}
+/* Header (no card, no white box) */
+.dw-header{ margin: 0 0 10px 0; }
 .dw-title{
   font-size: 30px;
   font-weight: 900;
@@ -165,22 +165,16 @@ section[data-testid="stSidebar"]{
   line-height: 1.5;
 }
 
-/* Chat viewport */
+/* Chat wrapper: ✅ 흰 박스 제거 (border/background/box-shadow 제거) */
 .dw-chat{
-  border: 1px solid var(--hairline);
-  background: rgba(255,255,255,0.55);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-radius: 24px;
-  padding: 14px 14px 10px 14px;
-  box-shadow: 0 16px 36px rgba(0,0,0,0.06);
+  padding: 10px 8px;
+  border: none;
+  background: transparent;
+  box-shadow: none;
 }
 
-/* Each row */
-.dw-row{
-  display:flex;
-  margin: 8px 0;
-}
+/* Rows */
+.dw-row{ display:flex; margin: 10px 0; }
 .dw-row.them{ justify-content:flex-start; }
 .dw-row.you{ justify-content:flex-end; }
 
@@ -196,7 +190,7 @@ section[data-testid="stSidebar"]{
   font-size: 15px;
 }
 
-/* Left (assistant) */
+/* Left bubble (assistant) */
 .dw-bubble.them{
   background: var(--bubble-them);
   color: var(--bubble-them-text);
@@ -216,11 +210,11 @@ section[data-testid="stSidebar"]{
   transform: rotate(45deg);
 }
 
-/* Right (user) */
+/* Right bubble (user) */
 .dw-bubble.you{
   background: var(--bubble-you);
   color: var(--bubble-you-text);
-  border: 1px solid rgba(244,143,177,0.25);
+  border: 1px solid rgba(244,143,177,0.20);
   border-bottom-right-radius: 8px;
 }
 .dw-bubble.you:after{
@@ -231,39 +225,42 @@ section[data-testid="stSidebar"]{
   width: 10px;
   height: 10px;
   background: rgba(244,143,177,1);
-  border-right: 1px solid rgba(244,143,177,0.25);
-  border-bottom: 1px solid rgba(244,143,177,0.25);
+  border-right: 1px solid rgba(244,143,177,0.20);
+  border-bottom: 1px solid rgba(244,143,177,0.20);
   transform: rotate(45deg);
 }
 
-/* Composer (inputs area) */
+/* ✅ Composer wrapper: 흰 박스(큰 캡슐) 제거 */
 .dw-composer{
   margin-top: 12px;
-  border: 1px solid var(--hairline);
-  background: rgba(255,255,255,0.78);
-  border-radius: 18px;
-  padding: 12px;
-  box-shadow: 0 12px 28px rgba(0,0,0,0.06);
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+.dw-hint{
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0 0 10px 2px;
 }
 
-/* Inputs */
+/* Inputs: 살짝만 iOS 느낌으로 (입력 위젯 자체는 필요) */
 .stTextInput input,
 .stNumberInput input,
 .stTextArea textarea,
 .stMultiSelect div[data-baseweb="select"] > div,
 .stSelectbox div[data-baseweb="select"] > div{
-  border-radius: 14px !important;
+  border-radius: 16px !important;
   border: 1px solid rgba(60,60,67,0.18) !important;
-  background: rgba(255,255,255,0.94) !important;
+  background: rgba(255,255,255,0.92) !important;
   box-shadow: 0 1px 0 rgba(0,0,0,0.03);
 }
-
 .stTextInput input:focus,
 .stNumberInput input:focus,
 .stTextArea textarea:focus{
   outline: none !important;
   border-color: rgba(247,182,200,0.65) !important;
-  box-shadow: 0 0 0 4px rgba(247,182,200,0.18) !important;
+  box-shadow: 0 0 0 4px var(--accent-soft) !important;
 }
 
 /* Buttons */
@@ -290,9 +287,9 @@ div.stButton > button:not([kind="primary"]){
   gap: 14px;
   align-items:center;
   padding: 14px;
-  border-radius: 20px;
-  border: 1px solid var(--hairline);
-  background: rgba(255,255,255,0.88);
+  border-radius: 22px;
+  border: 1px solid rgba(60,60,67,0.12);
+  background: rgba(255,255,255,0.92);
   box-shadow: 0 16px 36px rgba(0,0,0,0.08);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -311,12 +308,8 @@ div.stButton > button:not([kind="primary"]){
   margin-top: 10px;
 }
 
-/* Small helper */
-.dw-hint{
-  font-size: 13px;
-  color: var(--muted);
-  margin: 0 0 10px 0;
-}
+/* Optional: hide default st markdown blank blocks spacing a bit */
+div[data-testid="stMarkdown"]{ margin-bottom: 0.35rem; }
 </style>
         """,
         unsafe_allow_html=True,
@@ -445,7 +438,7 @@ def filter_entries_last_days(entries: list[dict], days: int) -> list[dict]:
 
 
 # =========================
-# 성장서사(주/월/년) 출력 (기존 유지)
+# 성장서사(주/월/년) 출력
 # =========================
 def show_growth_summary(entries: list[dict], title: str):
     if not entries:
@@ -533,6 +526,9 @@ def init_state():
     if "chat_log" not in st.session_state:
         st.session_state.chat_log = []
 
+    if "final_pushed" not in st.session_state:
+        st.session_state.final_pushed = False
+
     if "answers" not in st.session_state:
         st.session_state.answers = {
             "mood": None,
@@ -557,10 +553,7 @@ def render_chat():
     st.markdown('<div class="dw-chat">', unsafe_allow_html=True)
 
     if not st.session_state.chat_log:
-        st.markdown(
-            '<div class="dw-hint">대화를 시작하면 질문이 말풍선으로 뜨고, 답변도 말풍선으로 남아요.</div>',
-            unsafe_allow_html=True
-        )
+        st.markdown('<div class="dw-hint">아래에 한마디 보내면 대화가 시작돼요.</div>', unsafe_allow_html=True)
 
     for m in st.session_state.chat_log:
         role = "them" if m["role"] == "app" else "you"
@@ -591,7 +584,6 @@ def choose_multi_pills(label: str, options: list[str], key: str):
         return st.pills(label, options, selection_mode="multi", default=st.session_state.get(key, []), key=key, label_visibility="collapsed")
     else:
         return st.multiselect(label, options, default=st.session_state.get(key, []), key=key, label_visibility="collapsed")
-
 
 def next_step():
     st.session_state.step += 1
@@ -643,7 +635,7 @@ with st.sidebar:
         show_growth_summary(filter_entries_last_days(all_entries, 365), "올해 성장서사")
 
 
-# ---- Main Header (카드 제거) ----
+# ---- Main Header (흰 박스 제거된 상태) ----
 if ASSET_LOGO and os.path.exists(ASSET_LOGO):
     st.image(ASSET_LOGO, width=160)
 
@@ -721,7 +713,6 @@ st.write("")
 # 대기 상태(채팅 시작)
 # =========================
 if not st.session_state.chat_started and st.session_state.step == 0:
-    # iMessage처럼: "한마디 입력 -> 대화 시작"
     start_msg = st.chat_input("한마디만 보내서 기록을 시작해요 (예: 시작하자)")
     if start_msg:
         st.session_state.chat_started = True
@@ -741,7 +732,6 @@ if not st.session_state.chat_started and st.session_state.step == 0:
         else:
             push_app(f"{name}님, 오늘도 수고 많았어요. 천천히 기록해볼까요.")
 
-        # 첫 질문도 바로 말풍선으로
         push_app("오늘의 기분은 어떤가요? 지금 마음과 가장 가까운 걸 골라주세요.")
         st.rerun()
 
@@ -797,7 +787,6 @@ elif step == 2:
 
 # Step 3 — 한 단어(텍스트)
 elif step == 3:
-    # chat_input으로 "문자 보내기" 느낌
     msg = st.chat_input("한 단어를 보내주세요 (예: 버팀, 리셋, 반짝임)")
     if msg:
         a["one_word"] = msg.strip()
@@ -852,10 +841,6 @@ elif step == 5:
     if send:
         a["growth"] = g.strip()
         push_user(a["growth"] if a["growth"] else "(빈 값)")
-
-        # 오늘의 스페셜 질문(말풍선)
-        if "special_q" not in st.session_state or not st.session_state.special_q:
-            st.session_state.special_q = pick_today_special_question()
         push_app(f"오늘의 스페셜 질문이에요.\n{st.session_state.special_q}")
         next_step()
 
@@ -895,7 +880,6 @@ elif step == 7:
     growth = a["growth"]
 
     closing = closing_message(st.session_state.style_mode, name, one_word, best, growth)
-
     tag = infer_tag(mood, a["activities"], one_word)
     song = pick_song(tag)
     link = spotify_search_url(song["title"], song["artist"])
@@ -925,15 +909,14 @@ elif step == 7:
     }
     append_entry(entry)
 
-    # 마무리 메시지/추천곡도 말풍선 흐름 유지: app 말풍선으로 추가
-    # (중복 저장 방지: 한번만 추가)
-    if "final_pushed" not in st.session_state:
+    # 한 번만 말풍선으로 추가
+    if not st.session_state.final_pushed:
         push_app(closing)
         push_app("오늘의 추천곡은 이 노래예요.")
         st.session_state.final_pushed = True
         st.rerun()
 
-    # 채팅 영역 아래에 카드로 추천곡 표시
+    # 추천곡 카드 + 링크 + 다시하기
     st.markdown('<div class="dw-composer">', unsafe_allow_html=True)
     st.markdown(
         f"""
@@ -956,6 +939,7 @@ elif step == 7:
         st.session_state.step = 0
         st.session_state.chat_started = False
         st.session_state.chat_log = []
+        st.session_state.final_pushed = False
         st.session_state.answers = {
             "mood": None,
             "activities": [],
@@ -964,7 +948,5 @@ elif step == 7:
             "growth": "",
             "special_answer": "",
         }
-        st.session_state.final_pushed = False
         st.rerun()
-
     st.markdown("</div>", unsafe_allow_html=True)
