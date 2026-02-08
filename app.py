@@ -27,6 +27,14 @@ ASSET_LOGO = None  # 로고 쓰고 싶으면 경로 넣기
 # 고정 데이터
 # =========================
 STYLE_MODES = ["친한친구", "반려동물", "차분한 비서", "인생의 멘토", "감성 에디터"]
+STYLE_EMOJI = {
+    "친한친구": "💬",
+    "반려동물": "🐾",
+    "차분한 비서": "🗂️",
+    "인생의 멘토": "🧭",
+    "감성 에디터": "📝",
+}
+STYLE_OPTIONS = [f"{STYLE_EMOJI[s]} {s}" for s in STYLE_MODES]  # 라디오 표시용
 
 EMOJI_OPTIONS = [
     ("😀", "기쁨"), ("🙂", "평온"), ("😐", "무덤덤"), ("😔", "우울"), ("😢", "슬픔"),
@@ -147,9 +155,7 @@ def inject_css():
   padding-bottom: 2.6rem;
 }
 
-/* =========================
-   ✅ Sidebar: 더 iOS스럽게 (심플 + 유리질감 + 구분선 최소)
-   ========================= */
+/* Sidebar iOS glass */
 section[data-testid="stSidebar"]{
   background: rgba(255,255,255,0.58) !important;
   backdrop-filter: blur(22px);
@@ -173,12 +179,7 @@ section[data-testid="stSidebar"] hr{
   margin: 0.9rem 0;
 }
 
-/* Sidebar widgets: 라디오/탭/버튼 더 깔끔 */
-section[data-testid="stSidebar"] label,
-section[data-testid="stSidebar"] p,
-section[data-testid="stSidebar"] span{
-  color: rgba(60,60,67,0.90) !important;
-}
+/* Sidebar radio wrapper */
 section[data-testid="stSidebar"] div[role="radiogroup"]{
   padding: 8px 10px;
   border-radius: 16px;
@@ -192,13 +193,59 @@ section[data-testid="stSidebar"] div[role="radiogroup"] label{
 section[data-testid="stSidebar"] div[role="radiogroup"] label:hover{
   background: rgba(247,182,200,0.12);
 }
-section[data-testid="stSidebar"] .stButton button{
-  border-radius: 999px !important;
+
+/* Sidebar profile chip / avatar */
+.dw-profile-chip{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(60,60,67,0.10);
+  background: rgba(255,255,255,0.55);
+}
+.dw-avatar{
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 30%, rgba(247,182,200,1) 0%, rgba(247,182,200,0.35) 55%, rgba(255,255,255,0) 75%);
+  border: 1px solid rgba(244,143,177,0.18);
+  box-shadow: 0 10px 18px rgba(244,143,177,0.10);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight: 900;
+  color: rgba(60,60,67,0.92);
+}
+.dw-profile-name{
+  font-weight: 900;
+  letter-spacing: -0.2px;
+  font-size: 13px;
+  margin: 0;
+}
+.dw-profile-meta{
+  font-size: 12px;
+  color: rgba(60,60,67,0.72);
+  margin: 2px 0 0 0;
+}
+.dw-chip-row{
+  margin-top: 10px;
+  display:flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.dw-chip{
+  display:inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(247,182,200,0.55);
+  background: rgba(247,182,200,0.14);
+  font-size: 12px;
+  font-weight: 900;
+  color: rgba(60,60,67,0.92);
 }
 
-/* =========================
-   Header
-   ========================= */
+/* Header */
 .dw-header{ margin: 0 0 10px 0; }
 .dw-title{
   font-size: 30px;
@@ -213,22 +260,12 @@ section[data-testid="stSidebar"] .stButton button{
   line-height: 1.5;
 }
 
-/* =========================
-   Chat wrapper (no box)
-   ========================= */
-.dw-chat{
-  padding: 10px 8px;
-  border: none;
-  background: transparent;
-  box-shadow: none;
-}
-
-/* Rows */
+/* Chat wrapper */
+.dw-chat{ padding: 10px 8px; background: transparent; border: none; box-shadow:none; }
 .dw-row{ display:flex; margin: 10px 0; }
 .dw-row.them{ justify-content:flex-start; }
 .dw-row.you{ justify-content:flex-end; }
 
-/* Bubble */
 .dw-bubble{
   max-width: 78%;
   padding: 10px 12px;
@@ -280,19 +317,9 @@ section[data-testid="stSidebar"] .stButton button{
   transform: rotate(45deg);
 }
 
-/* Composer wrapper (no box) */
-.dw-composer{
-  margin-top: 12px;
-  border: none;
-  background: transparent;
-  box-shadow: none;
-  padding: 0;
-}
-.dw-hint{
-  font-size: 13px;
-  color: var(--muted);
-  margin: 0 0 10px 2px;
-}
+/* Composer */
+.dw-composer{ margin-top: 12px; border:none; background:transparent; box-shadow:none; padding:0; }
+.dw-hint{ font-size: 13px; color: var(--muted); margin: 0 0 10px 2px; }
 
 /* Inputs */
 .stTextInput input,
@@ -313,7 +340,7 @@ section[data-testid="stSidebar"] .stButton button{
   box-shadow: 0 0 0 4px var(--accent-soft) !important;
 }
 
-/* Buttons */
+/* ✅ Primary 버튼 (저장/전송/마무리): 연핑크 무드 통일 */
 button[kind="primary"]{
   background: linear-gradient(180deg, rgba(251,225,232,1) 0%, rgba(247,200,214,1) 100%) !important;
   color: #111 !important;
@@ -331,7 +358,7 @@ div.stButton > button:not([kind="primary"]){
   box-shadow: 0 10px 22px rgba(0,0,0,0.06) !important;
 }
 
-/* Music (inside bubble) */
+/* Music inside bubble */
 .dw-music-inbubble{
   margin-top: 10px;
   padding-top: 10px;
@@ -347,8 +374,7 @@ div.stButton > button:not([kind="primary"]){
   background: rgba(255,255,255,0.90);
   box-shadow: 0 12px 26px rgba(0,0,0,0.08);
 }
-
-/* ✅ Cover bigger: 190px */
+/* cover bigger */
 .dw-cover{
   width: 190px;
   height: 190px;
@@ -357,7 +383,6 @@ div.stButton > button:not([kind="primary"]){
   border: 1px solid rgba(60,60,67,0.12);
   box-shadow: 0 12px 26px rgba(0,0,0,0.12);
 }
-
 .dw-music-title{ font-size: 18px; font-weight: 900; margin:0; letter-spacing:-0.2px; }
 .dw-music-artist{ font-size: 14px; color: var(--muted); margin: 6px 0 0 0; }
 .dw-tag{
@@ -370,6 +395,53 @@ div.stButton > button:not([kind="primary"]){
   font-weight: 900;
   color: rgba(60,60,67,0.95);
   margin-top: 10px;
+}
+
+/* ✅ Spotify 이동 카드 버튼 */
+.dw-spotify-card{
+  margin-top: 10px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(60,60,67,0.12);
+  background: rgba(247,182,200,0.16);
+}
+.dw-spotify-left{
+  display:flex; align-items:center; gap:10px;
+}
+.dw-spotify-icon{
+  width: 28px; height: 28px; border-radius: 10px;
+  background: rgba(255,255,255,0.75);
+  border: 1px solid rgba(60,60,67,0.10);
+  display:flex; align-items:center; justify-content:center;
+  font-weight: 900;
+}
+.dw-spotify-title{
+  font-weight: 900;
+  font-size: 13px;
+  margin:0;
+  color: rgba(60,60,67,0.95);
+}
+.dw-spotify-sub{
+  font-size: 12px;
+  margin: 2px 0 0 0;
+  color: rgba(60,60,67,0.72);
+}
+.dw-spotify-btn{
+  text-decoration:none;
+  font-weight: 900;
+  font-size: 12px;
+  color: rgba(60,60,67,0.95);
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.75);
+  border: 1px solid rgba(60,60,67,0.12);
+}
+.dw-spotify-btn:hover{
+  background: rgba(255,255,255,0.95);
 }
 
 /* spacing */
@@ -665,24 +737,63 @@ init_state()
 # ---- Sidebar ----
 with st.sidebar:
     st.subheader("대화 스타일")
-    st.session_state.style_mode = st.radio(
+
+    # 표시용 옵션(이모지 포함) -> 실제 스타일 값으로 매핑
+    current_label = f"{STYLE_EMOJI[st.session_state.style_mode]} {st.session_state.style_mode}"
+    idx = STYLE_OPTIONS.index(current_label) if current_label in STYLE_OPTIONS else 0
+    chosen_label = st.radio(
         "오늘은 어떤 분위기로 기록할까요",
-        STYLE_MODES,
-        index=STYLE_MODES.index(st.session_state.style_mode),
+        STYLE_OPTIONS,
+        index=idx,
         label_visibility="collapsed",
     )
+    st.session_state.style_mode = chosen_label.split(" ", 1)[1]
 
     st.divider()
+
     st.subheader("내 프로필")
     prof = st.session_state.profile or {}
-    prof_line = " · ".join([x for x in [
-        prof.get("name", ""),
-        (f"{prof.get('age')}세" if prof.get("age") not in [None, ""] else ""),
-        (prof.get("gender") if prof.get("gender") not in [None, ""] else ""),
-        prof.get("job", "")
-    ] if x])
-    if prof_line:
-        st.caption(prof_line)
+    name = prof.get("name", "사용자")
+    job = prof.get("job", "")
+    age = prof.get("age", None)
+    gender = prof.get("gender", "선택 안 함")
+
+    meta_parts = []
+    if isinstance(age, int) and age > 0:
+        meta_parts.append(f"{age}세")
+    if gender and gender != "선택 안 함":
+        meta_parts.append(gender)
+    if job:
+        meta_parts.append(job)
+    meta = " · ".join(meta_parts) if meta_parts else "프로필을 설정해 주세요"
+
+    # 아바타 + 칩 UI
+    initial = (name[:1] if name else "U")
+    st.markdown(
+        f"""
+<div class="dw-profile-chip">
+  <div class="dw-avatar">{initial}</div>
+  <div>
+    <p class="dw-profile-name">{name}</p>
+    <p class="dw-profile-meta">{meta}</p>
+  </div>
+</div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    chips = []
+    if isinstance(age, int) and age > 0:
+        chips.append(f"{age}세")
+    if gender and gender != "선택 안 함":
+        chips.append(gender)
+    if job:
+        chips.append(job)
+
+    if chips:
+        chips_html = "".join([f'<span class="dw-chip">{c}</span>' for c in chips])
+        st.markdown(f'<div class="dw-chip-row">{chips_html}</div>', unsafe_allow_html=True)
+
     if st.button("프로필 수정", use_container_width=True):
         st.session_state.show_onboarding = True
         st.rerun()
@@ -716,7 +827,7 @@ st.markdown(
 
 
 # =========================
-# Onboarding
+# Onboarding (수직 폼)
 # =========================
 if st.session_state.show_onboarding:
     st.markdown('<div class="dw-composer">', unsafe_allow_html=True)
@@ -724,19 +835,23 @@ if st.session_state.show_onboarding:
 
     with st.form("profile_form", clear_on_submit=False):
         current = st.session_state.profile or {}
-        c1, c2 = st.columns([1.3, 1])
-        with c1:
-            name = st.text_input("이름", value=current.get("name", ""), placeholder="예: 연세")
-        with c2:
-            age_val = current.get("age")
-            age = st.number_input("나이", min_value=0, max_value=120, value=int(age_val) if isinstance(age_val, int) else 20, step=1)
 
-        c3, c4 = st.columns([1, 1.3])
-        with c3:
-            gender = st.selectbox("성별", ["선택 안 함", "여성", "남성"],
-                                  index=["선택 안 함", "여성", "남성"].index(current.get("gender", "선택 안 함")))
-        with c4:
-            job = st.text_input("직업", value=current.get("job", ""), placeholder="예: 대학생, 기획자, 개발자")
+        # ✅ 수직으로 하나씩
+        name = st.text_input("이름", value=current.get("name", ""), placeholder="예: 연세")
+        age_val = current.get("age")
+        age = st.number_input(
+            "나이",
+            min_value=0,
+            max_value=120,
+            value=int(age_val) if isinstance(age_val, int) else 20,
+            step=1,
+        )
+        gender = st.selectbox(
+            "성별",
+            ["선택 안 함", "여성", "남성"],
+            index=["선택 안 함", "여성", "남성"].index(current.get("gender", "선택 안 함")),
+        )
+        job = st.text_input("직업", value=current.get("job", ""), placeholder="예: 대학생, 기획자, 개발자")
 
         colA, colB = st.columns(2)
         save = colA.form_submit_button("저장", type="primary", use_container_width=True)
@@ -783,7 +898,8 @@ if not st.session_state.chat_started and st.session_state.step == 0:
         st.session_state.step = 1
         push_user(start_msg)
 
-        name = (st.session_state.profile or {}).get("name", "사용자")
+        profile = st.session_state.profile or {}
+        name = profile.get("name", "사용자")
         mode = st.session_state.style_mode
         if mode == "차분한 비서":
             push_app(f"{name}님, 오늘의 기록을 시작하겠습니다.")
@@ -933,7 +1049,7 @@ elif step == 6:
         next_step()
 
 
-# Step 7 — 완료: 마무리 + 추천곡(말풍선 안)
+# Step 7 — 완료: 마무리 + 추천곡(말풍선 안 + Spotify 이동 카드)
 elif step == 7:
     profile = st.session_state.profile or {}
     name = profile.get("name", "사용자")
@@ -984,11 +1100,16 @@ elif step == 7:
       <p class="dw-music-title">{song["title"]}</p>
       <p class="dw-music-artist">{song["artist"]}</p>
       <div class="dw-tag">{TAG_LABEL.get(tag, tag)}</div>
-      <div style="margin-top:10px;">
-        <a href="{link}" target="_blank"
-           style="text-decoration:none; font-weight:900; color: rgba(60,60,67,0.95);">
-          Spotify에서 듣기 →
-        </a>
+
+      <div class="dw-spotify-card">
+        <div class="dw-spotify-left">
+          <div class="dw-spotify-icon">♪</div>
+          <div>
+            <p class="dw-spotify-title">Spotify로 바로 이동하기</p>
+            <p class="dw-spotify-sub">새 탭에서 열립니다</p>
+          </div>
+        </div>
+        <a class="dw-spotify-btn" href="{link}" target="_blank">열기 →</a>
       </div>
     </div>
   </div>
