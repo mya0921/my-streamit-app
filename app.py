@@ -20,9 +20,7 @@ DATA_DIR = "data"
 PROFILE_PATH = os.path.join(DATA_DIR, "profile.json")
 ENTRIES_PATH = os.path.join(DATA_DIR, "entries.jsonl")
 
-# (선택) 로고를 쓰고 싶으면 여기에 파일을 넣고 경로만 맞추면 됨
-# ASSET_LOGO = "assets/daily_weaver.png"
-ASSET_LOGO = None
+ASSET_LOGO = None  # 로고 쓰고 싶으면 경로 넣기
 
 
 # =========================
@@ -30,7 +28,6 @@ ASSET_LOGO = None
 # =========================
 STYLE_MODES = ["친한친구", "반려동물", "차분한 비서", "인생의 멘토", "감성 에디터"]
 
-# Step 1: 이모지(표현은 자유롭게 바꿔도 됨)
 EMOJI_OPTIONS = [
     ("😀", "기쁨"), ("🙂", "평온"), ("😐", "무덤덤"), ("😔", "우울"), ("😢", "슬픔"),
     ("😭", "벅참"), ("😡", "분노"), ("😤", "답답"), ("😴", "피곤"), ("😬", "불안"),
@@ -38,10 +35,8 @@ EMOJI_OPTIONS = [
     ("⚡", "긴장"), ("🧊", "냉정"), ("🌊", "출렁임"), ("🫧", "가벼움"), ("🌸", "따뜻함"),
 ]
 
-# Step 2: 행동 10개 픽스
 ACTIVITIES = ["공부", "업무", "운동", "휴식", "약속", "창작", "정리", "이동", "소비", "회복"]
 
-# Step 6: 스페셜 질문 (여기에 150개 붙여 넣으면 끝)
 SPECIAL_QUESTIONS = [
     "오늘 하루를 색으로 표현한다면 어떤 색인가요?",
     "오늘 하루가 영화라면 제목은 무엇인가요?",
@@ -54,7 +49,6 @@ SPECIAL_QUESTIONS = [
     # ... (150개로 확장)
 ]
 
-# 추천곡(Spotify API 없이): 태그별 큐레이션
 SONGS = {
     "comfort": [
         {"title": "Love Poem", "artist": "아이유",
@@ -105,7 +99,7 @@ TAG_LABEL = {
 
 
 # =========================
-# 스타일(CSS): iOS Glass + 연핑크 포인트 + Progress + Footer bar
+# 스타일(CSS): iMessage-like bubbles + iOS clean
 # =========================
 def inject_css():
     st.markdown(
@@ -113,26 +107,28 @@ def inject_css():
 <style>
 :root{
   --bg: #F5F5F7;
-  --card: rgba(255,255,255,0.92);
-  --card-solid: #FFFFFF;
   --text: #111111;
   --muted: rgba(60,60,67,0.72);
   --hairline: rgba(60,60,67,0.12);
-  --shadow: 0 18px 45px rgba(0,0,0,0.08);
-  --shadow-soft: 0 10px 24px rgba(0,0,0,0.06);
-  --radius-xl: 22px;
-  --radius-lg: 18px;
-  --radius-md: 14px;
 
+  /* accent */
   --accent: #F7B6C8;
   --accent-strong: #F48FB1;
-  --accent-weak: rgba(247,182,200,0.20);
-  --accent-weak2: rgba(247,182,200,0.12);
+
+  /* iMessage bubbles */
+  --bubble-you: linear-gradient(180deg, rgba(247,182,200,1) 0%, rgba(244,143,177,1) 100%);
+  --bubble-you-text: #111;
+  --bubble-them: #FFFFFF;
+  --bubble-them-text: #111;
+  --bubble-shadow: 0 10px 26px rgba(0,0,0,0.08);
+
+  --radius: 20px;
+  --radius-small: 14px;
 }
 
-.stApp {
-  background: radial-gradient(1200px 700px at 20% -10%, rgba(247,182,200,0.28) 0%, rgba(245,245,247,0) 60%),
-              radial-gradient(900px 600px at 95% 10%, rgba(247,182,200,0.18) 0%, rgba(245,245,247,0) 55%),
+.stApp{
+  background: radial-gradient(1200px 700px at 20% -10%, rgba(247,182,200,0.24) 0%, rgba(245,245,247,0) 60%),
+              radial-gradient(900px 600px at 95% 10%, rgba(247,182,200,0.16) 0%, rgba(245,245,247,0) 55%),
               var(--bg) !important;
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
@@ -141,8 +137,8 @@ def inject_css():
 
 .main .block-container{
   max-width: 980px;
-  padding-top: 2.0rem;
-  padding-bottom: 5.5rem; /* footer-bar 여유 */
+  padding-top: 1.4rem;
+  padding-bottom: 2.8rem;
 }
 
 section[data-testid="stSidebar"]{
@@ -151,56 +147,104 @@ section[data-testid="stSidebar"]{
   -webkit-backdrop-filter: blur(18px);
   border-right: 1px solid var(--hairline) !important;
 }
-section[data-testid="stSidebar"] .block-container{
-  padding-top: 1.2rem;
-}
 
+/* Title area (no white card) */
+.dw-header{
+  margin: 0 0 10px 0;
+}
 .dw-title{
-  font-size: 34px;
+  font-size: 30px;
   font-weight: 900;
-  letter-spacing: -0.8px;
-  margin: 0 0 8px 0;
-  color: var(--text);
+  letter-spacing: -0.7px;
+  margin: 0 0 4px 0;
 }
 .dw-sub{
-  font-size: 15px;
-  color: var(--muted);
-  margin: 2px 0;
-  line-height: 1.55;
-}
-.dw-sub-strong{
-  font-size: 15px;
-  color: rgba(60,60,67,0.92);
-  margin-top: 10px;
-  line-height: 1.55;
-}
-
-.dw-qtitle{
-  font-size: 22px;
-  font-weight: 900;
-  margin: 0 0 6px 0;
-  letter-spacing: -0.55px;
-}
-.dw-qdesc{
   font-size: 14px;
   color: var(--muted);
-  margin: 0 0 14px 0;
+  margin: 0;
+  line-height: 1.5;
 }
 
-.dw-card{
-  background: var(--card);
+/* Chat viewport */
+.dw-chat{
   border: 1px solid var(--hairline);
-  border-radius: var(--radius-xl);
-  padding: 22px 24px;
-  box-shadow: var(--shadow);
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 24px;
+  padding: 14px 14px 10px 14px;
+  box-shadow: 0 16px 36px rgba(0,0,0,0.06);
 }
 
-.dw-divider{
-  height: 1px;
-  background: var(--hairline);
-  margin: 14px 0;
+/* Each row */
+.dw-row{
+  display:flex;
+  margin: 8px 0;
 }
-hr{ border-color: var(--hairline) !important; }
+.dw-row.them{ justify-content:flex-start; }
+.dw-row.you{ justify-content:flex-end; }
+
+/* Bubble */
+.dw-bubble{
+  max-width: 78%;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  box-shadow: var(--bubble-shadow);
+  position: relative;
+  word-break: break-word;
+  line-height: 1.55;
+  font-size: 15px;
+}
+
+/* Left (assistant) */
+.dw-bubble.them{
+  background: var(--bubble-them);
+  color: var(--bubble-them-text);
+  border: 1px solid rgba(60,60,67,0.10);
+  border-bottom-left-radius: 8px;
+}
+.dw-bubble.them:after{
+  content:"";
+  position:absolute;
+  left:-6px;
+  bottom: 10px;
+  width: 10px;
+  height: 10px;
+  background: var(--bubble-them);
+  border-left: 1px solid rgba(60,60,67,0.10);
+  border-bottom: 1px solid rgba(60,60,67,0.10);
+  transform: rotate(45deg);
+}
+
+/* Right (user) */
+.dw-bubble.you{
+  background: var(--bubble-you);
+  color: var(--bubble-you-text);
+  border: 1px solid rgba(244,143,177,0.25);
+  border-bottom-right-radius: 8px;
+}
+.dw-bubble.you:after{
+  content:"";
+  position:absolute;
+  right:-6px;
+  bottom: 10px;
+  width: 10px;
+  height: 10px;
+  background: rgba(244,143,177,1);
+  border-right: 1px solid rgba(244,143,177,0.25);
+  border-bottom: 1px solid rgba(244,143,177,0.25);
+  transform: rotate(45deg);
+}
+
+/* Composer (inputs area) */
+.dw-composer{
+  margin-top: 12px;
+  border: 1px solid var(--hairline);
+  background: rgba(255,255,255,0.78);
+  border-radius: 18px;
+  padding: 12px;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.06);
+}
 
 /* Inputs */
 .stTextInput input,
@@ -208,9 +252,9 @@ hr{ border-color: var(--hairline) !important; }
 .stTextArea textarea,
 .stMultiSelect div[data-baseweb="select"] > div,
 .stSelectbox div[data-baseweb="select"] > div{
-  border-radius: var(--radius-md) !important;
+  border-radius: 14px !important;
   border: 1px solid rgba(60,60,67,0.18) !important;
-  background: rgba(255,255,255,0.92) !important;
+  background: rgba(255,255,255,0.94) !important;
   box-shadow: 0 1px 0 rgba(0,0,0,0.03);
 }
 
@@ -219,7 +263,7 @@ hr{ border-color: var(--hairline) !important; }
 .stTextArea textarea:focus{
   outline: none !important;
   border-color: rgba(247,182,200,0.65) !important;
-  box-shadow: 0 0 0 4px var(--accent-weak) !important;
+  box-shadow: 0 0 0 4px rgba(247,182,200,0.18) !important;
 }
 
 /* Buttons */
@@ -229,85 +273,32 @@ button[kind="primary"]{
   border: none !important;
   border-radius: 999px !important;
   font-weight: 900 !important;
-  padding: 0.66rem 1.05rem !important;
+  padding: 0.62rem 1.05rem !important;
   box-shadow: 0 12px 26px rgba(244,143,177,0.22) !important;
-  transition: transform .08s ease, filter .2s ease;
 }
-button[kind="primary"]:active{ transform: scale(0.98); }
-
 div.stButton > button:not([kind="primary"]){
   background: rgba(255,255,255,0.85) !important;
-  color: var(--text) !important;
   border: 1px solid var(--hairline) !important;
   border-radius: 999px !important;
   font-weight: 800 !important;
-  padding: 0.62rem 1.0rem !important;
-  box-shadow: var(--shadow-soft) !important;
-  transition: transform .08s ease, background .2s ease;
-}
-div.stButton > button:not([kind="primary"]):active{ transform: scale(0.985); }
-
-/* Tabs */
-div[data-testid="stTabs"] button{
-  border-radius: 999px !important;
-  border: 1px solid var(--hairline) !important;
-  background: rgba(255,255,255,0.65) !important;
-  font-weight: 800 !important;
-  color: rgba(60,60,67,0.9) !important;
-}
-div[data-testid="stTabs"] button[aria-selected="true"]{
-  background: var(--card-solid) !important;
-  border-color: rgba(247,182,200,0.55) !important;
-  box-shadow: 0 8px 18px rgba(0,0,0,0.06) !important;
-}
-
-/* Chat bubbles */
-div[data-testid="stChatMessage"]{
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-xl);
-  background: rgba(255,255,255,0.82);
-  box-shadow: var(--shadow-soft);
-  padding: 10px 12px;
-  margin-bottom: 10px;
-  position: relative;
-  overflow: hidden;
-}
-div[data-testid="stChatMessage"]::before{
-  content:"";
-  position:absolute;
-  inset:0;
-  pointer-events:none;
-  background: linear-gradient(180deg, rgba(247,182,200,0.10) 0%, rgba(255,255,255,0) 55%);
-}
-div[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"]{
-  font-size: 15px;
-  line-height: 1.65;
+  box-shadow: 0 10px 22px rgba(0,0,0,0.06) !important;
 }
 
 /* Music card */
 .dw-music-card{
-  display: flex;
-  gap: 18px;
-  align-items: center;
-  padding: 18px;
-  border-radius: var(--radius-xl);
+  display:flex;
+  gap: 14px;
+  align-items:center;
+  padding: 14px;
+  border-radius: 20px;
   border: 1px solid var(--hairline);
   background: rgba(255,255,255,0.88);
-  box-shadow: var(--shadow);
+  box-shadow: 0 16px 36px rgba(0,0,0,0.08);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
-.dw-music-title{
-  font-size: 20px;
-  font-weight: 900;
-  margin: 0;
-  letter-spacing: -0.4px;
-}
-.dw-music-artist{
-  color: var(--muted);
-  font-size: 15px;
-  margin: 6px 0 0 0;
-}
+.dw-music-title{ font-size: 18px; font-weight: 900; margin:0; }
+.dw-music-artist{ font-size: 14px; color: var(--muted); margin: 6px 0 0 0; }
 .dw-tag{
   display:inline-block;
   font-size: 12px;
@@ -320,99 +311,12 @@ div[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"]{
   margin-top: 10px;
 }
 
-/* iOS-like metric cards */
-.dw-metric-grid{
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 10px;
-}
-@media (max-width: 920px){
-  .dw-metric-grid{ grid-template-columns: 1fr; }
-}
-.dw-metric-card{
-  background: rgba(255,255,255,0.82);
-  border: 1px solid var(--hairline);
-  border-radius: 18px;
-  padding: 14px 16px;
-  box-shadow: var(--shadow-soft);
-}
-.dw-metric-label{
+/* Small helper */
+.dw-hint{
   font-size: 13px;
   color: var(--muted);
-  margin: 0;
+  margin: 0 0 10px 0;
 }
-.dw-metric-value{
-  font-size: 22px;
-  font-weight: 900;
-  margin: 6px 0 0 0;
-  letter-spacing: -0.4px;
-}
-.dw-metric-sub{
-  font-size: 13px;
-  color: rgba(60,60,67,0.78);
-  margin: 6px 0 0 0;
-}
-
-/* Progress (custom bar) */
-.dw-progress-wrap{
-  margin-top: 14px;
-  margin-bottom: 8px;
-}
-.dw-progress-label{
-  font-size: 13px;
-  color: var(--muted);
-  margin-bottom: 8px;
-}
-.dw-progress-rail{
-  height: 10px;
-  background: rgba(60,60,67,0.10);
-  border-radius: 999px;
-  overflow: hidden;
-  border: 1px solid rgba(60,60,67,0.10);
-}
-.dw-progress-fill{
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, rgba(247,182,200,1) 0%, rgba(244,143,177,1) 100%);
-  border-radius: 999px;
-}
-
-/* Footer glass bar (visual only) */
-.dw-footer{
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 10px 16px 14px 16px;
-  background: rgba(255,255,255,0.72);
-  border-top: 1px solid var(--hairline);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  z-index: 999;
-}
-.dw-footer-inner{
-  max-width: 980px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-.dw-footer-hint{
-  font-size: 13px;
-  color: var(--muted);
-  line-height: 1.3;
-}
-
-/* subtle scrollbar */
-::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb {
-  background: rgba(60,60,67,0.22);
-  border-radius: 999px;
-  border: 2px solid rgba(245,245,247,0.9);
-}
-::-webkit-scrollbar-track { background: transparent; }
 </style>
         """,
         unsafe_allow_html=True,
@@ -496,7 +400,6 @@ def pick_song(tag: str) -> dict:
 def closing_message(style_mode: str, name: str, one_word: str, best: str, growth: str) -> str:
     best_s = shorten(best, 36)
     growth_s = shorten(growth, 36)
-
     random.seed(today_seed() + (one_word or "") + best_s)
 
     cheers = [
@@ -518,7 +421,7 @@ def closing_message(style_mode: str, name: str, one_word: str, best: str, growth
         return f"오늘을 **{one_word}**로 정리한 감각이 정확해요. {growth_s}을 발견한 것은 앞으로의 방향을 바꿀 수 있어요. {cheer}"
     return f"오늘은 **{one_word}**라는 단어가 하루를 조용히 감싸고 있었어요. {best_s} 그 장면이 한 장의 사진처럼 남아 있네요. {cheer}"
 
-def parse_entry_date(e: dict) -> date | None:
+def parse_entry_date(e: dict):
     d = e.get("date")
     if not d:
         return None
@@ -531,35 +434,30 @@ def parse_entry_date(e: dict) -> date | None:
             return None
 
 def filter_entries_last_days(entries: list[dict], days: int) -> list[dict]:
-    today = datetime.fromisoformat(st.session_state.today).date()
-    start = today - timedelta(days=days - 1)
+    today_ = datetime.fromisoformat(st.session_state.today).date()
+    start = today_ - timedelta(days=days - 1)
     out = []
     for e in entries:
         ed = parse_entry_date(e)
-        if ed and start <= ed <= today:
+        if ed and start <= ed <= today_:
             out.append(e)
     return out
 
 
 # =========================
-# 성장서사(주/월/년) 출력
+# 성장서사(주/월/년) 출력 (기존 유지)
 # =========================
 def show_growth_summary(entries: list[dict], title: str):
     if not entries:
         st.info("아직 기록이 없어요. 오늘의 기록을 먼저 남겨보세요.", icon="🧶")
         return
 
-    moods = []
-    activities = []
-    words = []
-    growths = []
-
+    moods, activities, words = [], [], []
     for e in entries:
         ans = e.get("answers", {})
         moods.append(ans.get("mood", ""))
         activities.extend(ans.get("activities", []))
         words.append(ans.get("one_word", ""))
-        growths.append(ans.get("growth", ""))
 
     mood_top = [m for m, _ in Counter(moods).most_common(1)]
     act_top = [a for a, _ in Counter(activities).most_common(3)]
@@ -645,12 +543,38 @@ def init_state():
             "special_answer": "",
         }
 
-
 def push_app(msg: str):
     st.session_state.chat_log.append({"role": "app", "content": msg})
 
 def push_user(msg: str):
     st.session_state.chat_log.append({"role": "user", "content": msg})
+
+
+# =========================
+# iMessage-style chat renderer
+# =========================
+def render_chat():
+    st.markdown('<div class="dw-chat">', unsafe_allow_html=True)
+
+    if not st.session_state.chat_log:
+        st.markdown(
+            '<div class="dw-hint">대화를 시작하면 질문이 말풍선으로 뜨고, 답변도 말풍선으로 남아요.</div>',
+            unsafe_allow_html=True
+        )
+
+    for m in st.session_state.chat_log:
+        role = "them" if m["role"] == "app" else "you"
+        content = (m.get("content") or "").replace("\n", "<br/>")
+        st.markdown(
+            f"""
+<div class="dw-row {role}">
+  <div class="dw-bubble {role}">{content}</div>
+</div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 # =========================
@@ -669,97 +593,9 @@ def choose_multi_pills(label: str, options: list[str], key: str):
         return st.multiselect(label, options, default=st.session_state.get(key, []), key=key, label_visibility="collapsed")
 
 
-# =========================
-# UI helpers: progress + dashboard + footer
-# =========================
-def progress_ratio(step: int) -> float:
-    # step: 1~6 질문, 7 완료
-    if step <= 0:
-        return 0.0
-    if step >= 7:
-        return 1.0
-    # 1~6 -> 0.0~1.0 (6개 질문 기준)
-    return (step - 1) / 6.0
-
-def render_progress(step: int):
-    if not st.session_state.chat_started:
-        return
-    r = progress_ratio(step)
-    pct = int(round(r * 100))
-    st.markdown(
-        f"""
-<div class="dw-progress-wrap">
-  <div class="dw-progress-label">오늘의 기록 진행률 · <b>{pct}%</b></div>
-  <div class="dw-progress-rail">
-    <div class="dw-progress-fill" style="width:{pct}%;"></div>
-  </div>
-</div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-def render_footer_hint(step: int):
-    if not st.session_state.chat_started:
-        return
-    if step == 7:
-        hint = "기록이 저장됐어요 · 오늘 기록을 다시 하고 싶으면 아래 버튼을 눌러요."
-    else:
-        hint = "아래 버튼으로 다음 단계로 넘어가요 · 편하게 천천히 적어도 괜찮아요."
-    st.markdown(
-        f"""
-<div class="dw-footer">
-  <div class="dw-footer-inner">
-    <div class="dw-footer-hint">{hint}</div>
-    <div class="dw-footer-hint">메인 컬러: 연핑크 🌸</div>
-  </div>
-</div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-def compute_overview(entries: list[dict], days: int):
-    recent = filter_entries_last_days(entries, days)
-    if not recent:
-        return {"days": 0, "top_act": "-", "top_word": "-", "top_mood": "-"}
-    moods, acts, words = [], [], []
-    for e in recent:
-        ans = e.get("answers", {})
-        moods.append(ans.get("mood", ""))
-        acts.extend(ans.get("activities", []))
-        words.append(ans.get("one_word", ""))
-    top_act = Counter(acts).most_common(1)[0][0] if acts else "-"
-    top_word = Counter([w for w in words if w]).most_common(1)[0][0] if any(words) else "-"
-    top_mood = Counter([m for m in moods if m]).most_common(1)[0][0] if any(moods) else "-"
-    return {"days": len(recent), "top_act": top_act, "top_word": top_word, "top_mood": top_mood}
-
-def render_growth_dashboard(all_entries: list[dict]):
-    w = compute_overview(all_entries, 7)
-    m = compute_overview(all_entries, 30)
-    y = compute_overview(all_entries, 365)
-
-    st.markdown("### ✨ 성장서사 요약 대시보드")
-    st.markdown(
-        f"""
-<div class="dw-metric-grid">
-  <div class="dw-metric-card">
-    <p class="dw-metric-label">이번 주</p>
-    <p class="dw-metric-value">{w["days"]}일</p>
-    <p class="dw-metric-sub">대표 활동: <b>{w["top_act"]}</b> · 핵심 단어: <b>{w["top_word"]}</b></p>
-  </div>
-  <div class="dw-metric-card">
-    <p class="dw-metric-label">이번 달</p>
-    <p class="dw-metric-value">{m["days"]}일</p>
-    <p class="dw-metric-sub">대표 활동: <b>{m["top_act"]}</b> · 핵심 단어: <b>{m["top_word"]}</b></p>
-  </div>
-  <div class="dw-metric-card">
-    <p class="dw-metric-label">올해</p>
-    <p class="dw-metric-value">{y["days"]}일</p>
-    <p class="dw-metric-sub">대표 활동: <b>{y["top_act"]}</b> · 핵심 단어: <b>{y["top_word"]}</b></p>
-  </div>
-</div>
-        """,
-        unsafe_allow_html=True,
-    )
+def next_step():
+    st.session_state.step += 1
+    st.rerun()
 
 
 # =========================
@@ -768,6 +604,7 @@ def render_growth_dashboard(all_entries: list[dict]):
 st.set_page_config(page_title=APP_TITLE, page_icon="🧶", layout="wide")
 inject_css()
 init_state()
+
 
 # ---- Sidebar ----
 with st.sidebar:
@@ -794,15 +631,9 @@ with st.sidebar:
         st.session_state.show_onboarding = True
         st.rerun()
 
-    # 성장서사
     st.divider()
     st.subheader("성장서사 보기")
     all_entries = read_entries()
-
-    # ✅ 새로: 요약 대시보드
-    render_growth_dashboard(all_entries)
-
-    # 기존 상세 탭은 유지
     wtab, mtab, ytab = st.tabs(["주간", "월간", "연간"])
     with wtab:
         show_growth_summary(filter_entries_last_days(all_entries, 7), "이번 주 성장서사")
@@ -812,29 +643,28 @@ with st.sidebar:
         show_growth_summary(filter_entries_last_days(all_entries, 365), "올해 성장서사")
 
 
-# ---- Main Header ----
+# ---- Main Header (카드 제거) ----
 if ASSET_LOGO and os.path.exists(ASSET_LOGO):
     st.image(ASSET_LOGO, width=160)
 
-st.markdown('<div class="dw-card">', unsafe_allow_html=True)
-st.markdown(f'<div class="dw-title">{APP_TITLE}</div>', unsafe_allow_html=True)
-st.markdown('<div class="dw-sub"><b>하루를 간단히 기록해보세요.</b></div>', unsafe_allow_html=True)
-st.markdown('<div class="dw-sub">기록이 쌓이면 경험이 정리되고, 포트폴리오의 이야기가 만들어져요.</div>', unsafe_allow_html=True)
-
-# ✅ 새로: Progress bar (대화 시작 후 표시)
-render_progress(st.session_state.step)
-
-st.markdown("</div>", unsafe_allow_html=True)
+st.markdown(
+    f"""
+<div class="dw-header">
+  <div class="dw-title">{APP_TITLE}</div>
+  <div class="dw-sub"><b>하루를 간단히 기록해보세요.</b></div>
+  <div class="dw-sub">기록이 쌓이면 경험이 정리되고, 포트폴리오의 이야기가 만들어져요.</div>
+</div>
+    """,
+    unsafe_allow_html=True,
+)
 
 
 # =========================
-# Onboarding (최초 실행/수정)
+# Onboarding
 # =========================
 if st.session_state.show_onboarding:
-    st.markdown('<div class="dw-card">', unsafe_allow_html=True)
-
-    st.markdown('<div class="dw-sub-strong">처음 한 번만 입력하면 더 자연스럽게 기록할 수 있어요.</div>', unsafe_allow_html=True)
-    st.markdown('<div class="dw-sub">언제든 사이드바에서 수정할 수 있어요.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="dw-composer">', unsafe_allow_html=True)
+    st.markdown('<div class="dw-hint"><b>처음 한 번만 입력</b>하면 더 자연스럽게 기록할 수 있어요. (사이드바에서 언제든 수정 가능)</div>', unsafe_allow_html=True)
 
     with st.form("profile_form", clear_on_submit=False):
         current = st.session_state.profile or {}
@@ -881,157 +711,181 @@ if st.session_state.show_onboarding:
 
 
 # =========================
-# 시작 안내(대기 상태) + 채팅 트리거
+# Chat Area
+# =========================
+render_chat()
+st.write("")
+
+
+# =========================
+# 대기 상태(채팅 시작)
 # =========================
 if not st.session_state.chat_started and st.session_state.step == 0:
-    st.markdown('<div class="dw-divider"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="dw-sub-strong"><b>오늘 기록을 시작하려면 한마디만 입력해 주세요.</b></div>', unsafe_allow_html=True)
-    st.markdown('<div class="dw-sub">예: “시작하자”, “오늘 기록할래”</div>', unsafe_allow_html=True)
+    # iMessage처럼: "한마디 입력 -> 대화 시작"
+    start_msg = st.chat_input("한마디만 보내서 기록을 시작해요 (예: 시작하자)")
+    if start_msg:
+        st.session_state.chat_started = True
+        st.session_state.step = 1
+        push_user(start_msg)
 
-user_msg = st.chat_input("여기에 한마디를 입력해 시작하세요")
-if user_msg and not st.session_state.chat_started:
-    st.session_state.chat_started = True
-    st.session_state.step = 1
-    push_user(user_msg)
+        name = (st.session_state.profile or {}).get("name", "사용자")
+        mode = st.session_state.style_mode
+        if mode == "차분한 비서":
+            push_app(f"{name}님, 오늘의 기록을 시작하겠습니다.")
+        elif mode == "반려동물":
+            push_app(f"{name}님, 반가워요 🐾 오늘 기록을 시작해볼까요.")
+        elif mode == "인생의 멘토":
+            push_app(f"{name}님, 오늘도 한 걸음 나아가 봅시다. 기록을 시작할게요.")
+        elif mode == "감성 에디터":
+            push_app(f"{name}님, 오늘의 장면들을 조용히 엮어볼까요.")
+        else:
+            push_app(f"{name}님, 오늘도 수고 많았어요. 천천히 기록해볼까요.")
 
-    name = (st.session_state.profile or {}).get("name", "사용자")
-    mode = st.session_state.style_mode
-    if mode == "차분한 비서":
-        push_app(f"{name}님, 오늘의 기록을 시작하겠습니다.")
-    elif mode == "반려동물":
-        push_app(f"{name}님, 반가워요 🐾 오늘 기록을 시작해볼까요.")
-    elif mode == "인생의 멘토":
-        push_app(f"{name}님, 오늘도 한 걸음 나아가 봅시다. 기록을 시작할게요.")
-    elif mode == "감성 에디터":
-        push_app(f"{name}님, 오늘의 장면들을 조용히 엮어볼까요.")
-    else:
-        push_app(f"{name}님, 오늘도 수고 많았어요. 천천히 기록해볼까요.")
-    st.rerun()
+        # 첫 질문도 바로 말풍선으로
+        push_app("오늘의 기분은 어떤가요? 지금 마음과 가장 가까운 걸 골라주세요.")
+        st.rerun()
 
-
-# 채팅 로그 출력
-for m in st.session_state.chat_log:
-    with st.chat_message("assistant" if m["role"] == "app" else "user"):
-        st.write(m["content"])
-
-st.write("")
-st.divider()
-
-
-def next_step():
-    st.session_state.step += 1
-    st.rerun()
+    st.stop()
 
 
 # =========================
-# 질문 플로우
+# 질문 플로우 (대화형 말풍선 + 전송)
 # =========================
 step = st.session_state.step
 a = st.session_state.answers
 
-# Step 1 — 오늘의 기분(이모지+단어)
-if st.session_state.chat_started and step == 1:
-    if "q1_shown" not in st.session_state:
-        push_app("**오늘의 기분**은 어떤가요?\n지금 마음과 가장 가까운 것을 골라주세요.")
-        st.session_state.q1_shown = True
-        st.rerun()
 
-    st.markdown('<div class="dw-qtitle"><b>오늘의 기분</b></div>', unsafe_allow_html=True)
-    st.markdown('<div class="dw-qdesc">지금 마음과 가장 가까운 것을 골라주세요.</div>', unsafe_allow_html=True)
+# Step 1 — 기분 선택
+if step == 1:
+    st.markdown('<div class="dw-composer">', unsafe_allow_html=True)
+    st.markdown('<div class="dw-hint">기분을 선택하고 <b>전송</b>하세요.</div>', unsafe_allow_html=True)
 
     options = [f"{e} {t}" for e, t in EMOJI_OPTIONS]
     chosen = choose_single_pills("mood", options, key="mood_choice")
 
-    if st.button("다음", type="primary"):
+    col1, col2 = st.columns([1, 1])
+    send = col2.button("전송", type="primary", use_container_width=True)
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    if send:
         a["mood"] = chosen
+        push_user(chosen)
+        push_app("오늘 하루는 무엇으로 채워졌나요? 오늘 한 일을 모두 선택해 주세요.")
         next_step()
 
 
-# Step 2 — 무엇으로 채워졌나요(행동 10개, 복수)
-elif st.session_state.chat_started and step == 2:
-    if "q2_shown" not in st.session_state:
-        push_app("**무엇으로 채워졌나요**?\n오늘 한 일을 모두 선택해 주세요.")
-        st.session_state.q2_shown = True
-        st.rerun()
-
-    st.markdown('<div class="dw-qtitle"><b>무엇으로 채워졌나요</b></div>', unsafe_allow_html=True)
-    st.markdown('<div class="dw-qdesc">해당하는 항목을 모두 선택해 주세요.</div>', unsafe_allow_html=True)
+# Step 2 — 활동 선택(복수)
+elif step == 2:
+    st.markdown('<div class="dw-composer">', unsafe_allow_html=True)
+    st.markdown('<div class="dw-hint">오늘 한 일을 고르고 <b>전송</b>하세요. (복수 선택 가능)</div>', unsafe_allow_html=True)
 
     selected = choose_multi_pills("activities", ACTIVITIES, key="activity_choice")
 
-    if st.button("다음", type="primary"):
+    col1, col2 = st.columns([1, 1])
+    send = col2.button("전송", type="primary", use_container_width=True)
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    if send:
         a["activities"] = selected
+        text = ", ".join(selected) if selected else "(선택 없음)"
+        push_user(text)
+        push_app("한 단어로 오늘을 표현한다면 무엇인가요? 딱 떠오르는 단어 하나만 적어주세요.")
         next_step()
 
 
-# Step 3 — 한 단어로 표현
-elif st.session_state.chat_started and step == 3:
-    if "q3_shown" not in st.session_state:
-        push_app("**한 단어로 표현**한다면 무엇인가요?\n딱 떠오르는 단어 하나만 적어주세요.")
-        st.session_state.q3_shown = True
-        st.rerun()
-
-    st.markdown('<div class="dw-qtitle"><b>한 단어로 표현</b></div>', unsafe_allow_html=True)
-    st.markdown('<div class="dw-qdesc">딱 떠오르는 단어 하나만 적어주세요.</div>', unsafe_allow_html=True)
-
-    one = st.text_input("", value=a["one_word"], placeholder="예: 버팀, 리셋, 반짝임, 흐림")
-    if st.button("다음", type="primary"):
-        a["one_word"] = one.strip()
+# Step 3 — 한 단어(텍스트)
+elif step == 3:
+    # chat_input으로 "문자 보내기" 느낌
+    msg = st.chat_input("한 단어를 보내주세요 (예: 버팀, 리셋, 반짝임)")
+    if msg:
+        a["one_word"] = msg.strip()
+        push_user(a["one_word"] or "(빈 값)")
+        push_app("가장 기억에 남는 순간은 무엇인가요? 떠오르는 장면을 자유롭게 적어주세요.")
         next_step()
 
 
-# Step 4 — 가장 기억에 남는 순간
-elif st.session_state.chat_started and step == 4:
-    if "q4_shown" not in st.session_state:
-        push_app("**가장 기억에 남는 순간**은 무엇인가요?\n떠오르는 장면을 자유롭게 적어주세요.")
-        st.session_state.q4_shown = True
-        st.rerun()
+# Step 4 — 베스트 모먼트(멀티라인)
+elif step == 4:
+    st.markdown('<div class="dw-composer">', unsafe_allow_html=True)
+    st.markdown('<div class="dw-hint">장면을 적고 <b>전송</b>하세요. (길게 적어도 좋아요)</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="dw-qtitle"><b>가장 기억에 남는 순간</b></div>', unsafe_allow_html=True)
-    st.markdown('<div class="dw-qdesc">떠오르는 장면을 자유롭게 적어주세요.</div>', unsafe_allow_html=True)
+    best = st.text_area(
+        "",
+        value=a["best_moment"],
+        height=140,
+        placeholder="예: 퇴근길에 들었던 노래, 누군가의 한마디, 혼자 웃었던 순간…",
+        label_visibility="collapsed",
+    )
 
-    best = st.text_area("", value=a["best_moment"], height=160,
-                        placeholder="예: 퇴근길에 들었던 노래, 누군가의 한마디, 혼자 웃었던 순간…")
-    if st.button("다음", type="primary"):
+    col1, col2 = st.columns([1, 1])
+    send = col2.button("전송", type="primary", use_container_width=True)
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    if send:
         a["best_moment"] = best.strip()
+        push_user(a["best_moment"] if a["best_moment"] else "(빈 값)")
+        push_app("새롭게 배우거나 성장한 점이 있나요? 작은 깨달음도 충분히 의미 있어요.")
         next_step()
 
 
-# Step 5 — 새롭게 배우거나 성장한 점
-elif st.session_state.chat_started and step == 5:
-    if "q5_shown" not in st.session_state:
-        push_app("**새롭게 배우거나 성장한 점**이 있나요?\n작은 깨달음도 충분히 의미 있어요.")
-        st.session_state.q5_shown = True
-        st.rerun()
+# Step 5 — 성장(멀티라인)
+elif step == 5:
+    st.markdown('<div class="dw-composer">', unsafe_allow_html=True)
+    st.markdown('<div class="dw-hint">성장 포인트를 적고 <b>전송</b>하세요.</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="dw-qtitle"><b>새롭게 배우거나 성장한 점</b></div>', unsafe_allow_html=True)
-    st.markdown('<div class="dw-qdesc">작은 깨달음도 충분히 의미 있어요.</div>', unsafe_allow_html=True)
+    g = st.text_area(
+        "",
+        value=a["growth"],
+        height=140,
+        placeholder="예: 감정을 말로 정리하는 방법, 나의 패턴, 사람과의 거리감…",
+        label_visibility="collapsed",
+    )
 
-    g = st.text_area("", value=a["growth"], height=160,
-                     placeholder="예: 감정을 말로 정리하는 방법, 나의 패턴, 사람과의 거리감…")
-    if st.button("다음", type="primary"):
+    col1, col2 = st.columns([1, 1])
+    send = col2.button("전송", type="primary", use_container_width=True)
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    if send:
         a["growth"] = g.strip()
+        push_user(a["growth"] if a["growth"] else "(빈 값)")
+
+        # 오늘의 스페셜 질문(말풍선)
+        if "special_q" not in st.session_state or not st.session_state.special_q:
+            st.session_state.special_q = pick_today_special_question()
+        push_app(f"오늘의 스페셜 질문이에요.\n{st.session_state.special_q}")
         next_step()
 
 
-# Step 6 — 오늘의 스페셜 질문(랜덤)
-elif st.session_state.chat_started and step == 6:
-    if "q6_shown" not in st.session_state:
-        push_app(f"**오늘의 스페셜 질문**이에요.\n{st.session_state.special_q}")
-        st.session_state.q6_shown = True
-        st.rerun()
+# Step 6 — 스페셜(멀티라인)
+elif step == 6:
+    st.markdown('<div class="dw-composer">', unsafe_allow_html=True)
+    st.markdown('<div class="dw-hint">답을 적고 <b>기록 마무리</b>를 눌러주세요.</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="dw-qtitle"><b>오늘의 스페셜 질문</b></div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="dw-qdesc">{st.session_state.special_q}</div>', unsafe_allow_html=True)
+    sp = st.text_area(
+        "",
+        value=a["special_answer"],
+        height=120,
+        placeholder="자유롭게 답해 주세요 :)",
+        label_visibility="collapsed",
+    )
 
-    sp = st.text_area("", value=a["special_answer"], height=140)
-    if st.button("기록 마무리", type="primary"):
+    col1, col2 = st.columns([1, 1])
+    done = col2.button("기록 마무리", type="primary", use_container_width=True)
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    if done:
         a["special_answer"] = sp.strip()
+        push_user(a["special_answer"] if a["special_answer"] else "(빈 값)")
         next_step()
 
 
-# Step 7 — 완료: 소회 + 추천곡(커버 크게)
-elif st.session_state.chat_started and step == 7:
+# Step 7 — 완료
+elif step == 7:
     profile = st.session_state.profile or {}
     name = profile.get("name", "사용자")
 
@@ -1071,16 +925,20 @@ elif st.session_state.chat_started and step == 7:
     }
     append_entry(entry)
 
-    with st.chat_message("assistant"):
-        st.write(closing)
-        st.write("")
-        st.markdown("**오늘의 추천곡은 이 노래예요.**")
-        st.caption("오늘의 분위기와 가장 잘 어울리는 곡을 골라봤어요.")
+    # 마무리 메시지/추천곡도 말풍선 흐름 유지: app 말풍선으로 추가
+    # (중복 저장 방지: 한번만 추가)
+    if "final_pushed" not in st.session_state:
+        push_app(closing)
+        push_app("오늘의 추천곡은 이 노래예요.")
+        st.session_state.final_pushed = True
+        st.rerun()
 
-        st.markdown(
-            f"""
+    # 채팅 영역 아래에 카드로 추천곡 표시
+    st.markdown('<div class="dw-composer">', unsafe_allow_html=True)
+    st.markdown(
+        f"""
 <div class="dw-music-card">
-  <img src="{song["cover_url"]}" width="180" height="180"
+  <img src="{song["cover_url"]}" width="120" height="120"
        style="border-radius: 18px; border: 1px solid rgba(60,60,67,0.12); box-shadow: 0 10px 24px rgba(0,0,0,0.10);" />
   <div>
     <p class="dw-music-title">{song["title"]}</p>
@@ -1088,13 +946,11 @@ elif st.session_state.chat_started and step == 7:
     <div class="dw-tag">{TAG_LABEL.get(tag, tag)}</div>
   </div>
 </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        st.write("")
-        st.link_button("Spotify에서 듣기", link)
-
+        """,
+        unsafe_allow_html=True,
+    )
+    st.write("")
+    st.link_button("Spotify에서 듣기", link)
     st.write("")
     if st.button("오늘 기록 다시 하기", use_container_width=True):
         st.session_state.step = 0
@@ -1108,8 +964,7 @@ elif st.session_state.chat_started and step == 7:
             "growth": "",
             "special_answer": "",
         }
+        st.session_state.final_pushed = False
         st.rerun()
 
-
-# ✅ 하단 iOS 스타일 glass footer (visual)
-render_footer_hint(st.session_state.step)
+    st.markdown("</div>", unsafe_allow_html=True)
