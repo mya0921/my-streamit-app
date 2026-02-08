@@ -168,7 +168,6 @@ def inject_css():
                "Apple SD Gothic Neo", "Pretendard", "Noto Sans KR", Segoe UI, Roboto, Helvetica, Arial, sans-serif;
 }
 
-/* content area */
 .main .block-container{
   max-width: 980px;
   padding-top: 1.1rem;
@@ -375,17 +374,13 @@ div[data-testid="stFormSubmitButton"] button{
 }
 
 /* =====================================================
-   MUSIC: 여백 완전 제거 + glossy album cover
+   MUSIC: 여백 0 + glossy album cover
    ===================================================== */
-
-/* wrap 자체를 없애서 bubble 내부 padding만 남게 */
 .dw-music-wrap{
   margin: 0 !important;
   padding: 0 !important;
   border: none !important;
 }
-
-/* 카드도 그냥 딱 붙게 */
 .dw-music-card{
   display:flex;
   gap: 12px;
@@ -396,8 +391,6 @@ div[data-testid="stFormSubmitButton"] button{
   background: transparent !important;
   box-shadow: none !important;
 }
-
-/* glossy cover */
 .dw-cover-wrap{
   position: relative;
   width: 140px;
@@ -408,7 +401,6 @@ div[data-testid="stFormSubmitButton"] button{
   box-shadow: 0 18px 34px rgba(0,0,0,0.22);
   border: 1px solid rgba(255,255,255,0.55);
 }
-
 .dw-cover{
   width: 100%;
   height: 100%;
@@ -416,8 +408,6 @@ div[data-testid="stFormSubmitButton"] button{
   border-radius: 26px;
   display:block;
 }
-
-/* glossy shine overlay */
 .dw-cover-wrap:after{
   content:"";
   position:absolute;
@@ -436,8 +426,6 @@ div[data-testid="stFormSubmitButton"] button{
   pointer-events:none;
   opacity: 0.75;
 }
-
-/* bottom glow */
 .dw-cover-wrap:before{
   content:"";
   position:absolute;
@@ -450,7 +438,6 @@ div[data-testid="stFormSubmitButton"] button{
   opacity: 0.85;
   pointer-events:none;
 }
-
 .dw-music-title{
   font-size: 16px;
   font-weight: 900;
@@ -462,7 +449,6 @@ div[data-testid="stFormSubmitButton"] button{
   color: rgba(60,60,67,0.70);
   margin: 4px 0 0 0;
 }
-
 .dw-open-row{
   margin-top: 10px;
   display:flex;
@@ -664,7 +650,7 @@ def filter_entries_last_days(entries: list[dict], days: int) -> list[dict]:
 
 
 # =========================
-# 성장서사
+# 성장서사 (+ 포트폴리오 소재 후보 복구!)
 # =========================
 def show_growth_summary(entries: list[dict], title: str):
     if not entries:
@@ -711,6 +697,18 @@ def show_growth_summary(entries: list[dict], title: str):
         st.write(f"- 자주 등장한 활동은 **{', '.join(act_top)}**였어요.")
     if word_top and any(word_top):
         st.write(f"- 자주 등장한 단어는 **{', '.join([x for x in word_top if x])}**였어요.")
+
+    # ✅ 이전 버전: 포트폴리오 소재 후보 복구
+    st.markdown("**자소서·포트폴리오 소재 후보**")
+    st.write("**소재 1**")
+    st.write("- 상황: ")
+    st.write("- 행동: ")
+    st.write("- 결과/변화: ")
+
+    st.write("**소재 2**")
+    st.write("- 상황: ")
+    st.write("- 행동: ")
+    st.write("- 결과/변화: ")
 
 
 # =========================
@@ -1124,17 +1122,14 @@ if step == 7:
     if not st.session_state.final_pushed:
         music_html = f"""
 <b>{closing}</b><br/><br/>
-
 <div class="dw-music-wrap">
   <div class="dw-music-card">
     <div class="dw-cover-wrap">
       <img class="dw-cover" src="{song["cover_url"]}" />
     </div>
-
     <div style="flex:1;">
       <p class="dw-music-title">{song["title"]}</p>
       <p class="dw-music-artist">{song["artist"]}</p>
-
       <div class="dw-open-row">
         <div class="dw-open-text">Spotify에서 바로 감상하기</div>
         <a class="dw-open-btn" href="{link}" target="_blank" title="Spotify 열기">🎧</a>
