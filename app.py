@@ -20,7 +20,7 @@ ENTRIES_PATH = f"{DATA_DIR}/entries.jsonl"
 st.set_page_config(APP_TITLE, "🧶", layout="wide")
 
 # ==================================================
-# 고정 데이터 (❗사용자 요구 그대로 유지)
+# 고정 데이터 (❗사용자 지정 그대로)
 # ==================================================
 STYLE_MODES = ["친한친구", "반려동물", "차분한 비서", "인생의 멘토", "감성 에디터"]
 
@@ -42,11 +42,10 @@ SPECIAL_QUESTIONS = [
     "오늘 하루를 광고 문구로 만든다면 무엇인가요?",
     "오늘 하루가 선물이라면 포장지는 어떤 모습인가요?",
     "오늘 하루를 한 컷 만화로 그린다면 어떤 장면인가요?",
-    # (여기에 150개까지 그대로 확장 가능)
 ]
 
 # ==================================================
-# 유틸
+# 파일 유틸
 # ==================================================
 def ensure_dir():
     os.makedirs(DATA_DIR, exist_ok=True)
@@ -72,6 +71,16 @@ def read_entries():
     return [json.loads(l) for l in open(ENTRIES_PATH, encoding="utf-8") if l.strip()]
 
 # ==================================================
+# 날짜 파싱 (🔥 에러 원인 해결)
+# ==================================================
+def parse_entry_datetime(e):
+    if "created" in e:
+        return datetime.fromisoformat(e["created"])
+    if "date" in e:
+        return datetime.fromisoformat(e["date"] + "T00:00:00")
+    return None
+
+# ==================================================
 # 세션 상태
 # ==================================================
 if "profile" not in st.session_state:
@@ -94,7 +103,7 @@ if "answers" not in st.session_state:
     }
 
 # ==================================================
-# 사이드바 — 분석 (주/월/연)
+# 사이드바 — 주/월/연 분석
 # ==================================================
 with st.sidebar:
     st.markdown("## 📊 기록 분석")
@@ -103,13 +112,17 @@ with st.sidebar:
     def group_by(entries, key):
         groups = defaultdict(list)
         for e in entries:
-            dt = datetime.fromisoformat(e["created"])
+            dt = parse_entry_datetime(e)
+            if dt is None:
+                continue
+
             if key == "week":
                 k = dt.strftime("%Y-W%U")
             elif key == "month":
                 k = dt.strftime("%Y-%m")
             else:
                 k = dt.strftime("%Y")
+
             groups[k].append(e)
         return groups
 
@@ -118,12 +131,16 @@ with st.sidebar:
             st.markdown(f"### {label} 요약")
             grouped = group_by(entries, key)
             latest = sorted(grouped.keys())[-1]
+
             acts, words = [], []
             for e in grouped[latest]:
-                acts += e["answers"]["activities"]
-                words.append(e["answers"]["one_word"])
-            st.write("활동:", ", ".join([a for a,_ in Counter(acts).most_common(3)]))
-            st.write("키워드:", ", ".join([w for w,_ in Counter(words).most_common(3)]))
+                acts += e.get("answers", {}).get("activities", [])
+                words.append(e.get("answers", {}).get("one_word", ""))
+
+            if acts:
+                st.write("활동:", ", ".join([a for a, _ in Counter(acts).most_common(3)]))
+            if words:
+                st.write("키워드:", ", ".join([w for w, _ in Counter(words).most_common(3)]))
     else:
         st.info("아직 기록이 없습니다.")
 
@@ -135,7 +152,7 @@ if st.session_state.profile is None:
     st.markdown("### 하루를 엮어, 미래를 만듭니다")
 
     name = st.text_input("이름")
-    age = st.number_input("나이", min_value=0, max_value=120, step=1)
+    age = st.number_input("나이", 0, 120, step=1)
     gender = st.selectbox("성별", ["남성", "여성", "선택하지 않음"])
     job = st.text_input("직업")
 
@@ -158,75 +175,67 @@ if st.session_state.profile is None:
 st.markdown(f"# {APP_TITLE}")
 st.markdown(f"**{st.session_state.profile['name']}님의 오늘**")
 
-st.session_state.style_mode = st.selectbox(
-    "대화 스타일", STYLE_MODES, index=STYLE_MODES.index(st.session_state.style_mode)
-)
+st.session_state.style_mode = st.selectbox("대화 스타일", STYLE_MODES)
 
 step = st.session_state.step
 
-# Step 1
+# Step 1 — 이모지
 if step == 1:
     st.markdown("### 지금 기분에 가장 가까운 이모지를 골라줘")
     cols = st.columns(5)
     for i, (emo, label) in enumerate(EMOJI_OPTIONS):
         if cols[i % 5].button(f"{emo}\n{label}"):
             st.session_state.answers["emoji"] = emo
-            st.session_state.step += 1
+            st.session_state.step = 2
             st.experimental_rerun()
 
-# Step 2
+# Step 2 — 행동
 elif step == 2:
     st.markdown("### 오늘 어떤 행동을 했어?")
     st.session_state.answers["activities"] = st.multiselect(
         "", ACTIVITIES, default=st.session_state.answers["activities"]
     )
     if st.button("다음"):
-        st.session_state.step += 1
+        st.session_state.step = 3
         st.experimental_rerun()
 
-# Step 3
+# Step 3 — 한 단어
 elif step == 3:
     st.markdown("### 오늘을 한 단어로 표현한다면?")
-    st.session_state.answers["one_word"] = st.text_input(
-        "", st.session_state.answers["one_word"]
-    )
+    st.session_state.answers["one_word"] = st.text_input("", st.session_state.answers["one_word"])
     if st.button("다음"):
-        st.session_state.step += 1
+        st.session_state.step = 4
         st.experimental_rerun()
 
-# Step 4
+# Step 4 — 순간
 elif step == 4:
     st.markdown("### 가장 기억에 남는 순간은?")
-    st.session_state.answers["moment"] = st.text_area(
-        "", st.session_state.answers["moment"]
-    )
+    st.session_state.answers["moment"] = st.text_area("", st.session_state.answers["moment"])
     if st.button("다음"):
-        st.session_state.step += 1
+        st.session_state.step = 5
         st.experimental_rerun()
 
-# Step 5
+# Step 5 — 성장
 elif step == 5:
     st.markdown("### 오늘의 경험에서 어떤 의미를 얻었어?")
-    st.session_state.answers["growth"] = st.text_area(
-        "", st.session_state.answers["growth"]
-    )
+    st.session_state.answers["growth"] = st.text_area("", st.session_state.answers["growth"])
     if st.button("다음"):
-        st.session_state.step += 1
+        st.session_state.step = 6
         st.experimental_rerun()
 
-# Step 6
+# Step 6 — 스페셜
 elif step == 6:
-    q = random.choice(SPECIAL_QUESTIONS)
-    st.markdown(f"### ✨ {q}")
-    st.session_state.answers["special"] = st.text_area(
-        "", st.session_state.answers["special"]
-    )
+    question = random.choice(SPECIAL_QUESTIONS)
+    st.markdown(f"### ✨ {question}")
+    st.session_state.answers["special"] = st.text_area("", st.session_state.answers["special"])
+
     if st.button("기록 저장"):
         append_entry({
             "created": datetime.now().isoformat(),
             "style_mode": st.session_state.style_mode,
             "answers": st.session_state.answers
         })
+
         st.session_state.step = 1
         st.session_state.answers = {
             "emoji": None,
