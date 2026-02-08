@@ -1,16 +1,17 @@
 # app.py
-# Daily Weaver — Full Version
-# 기록 → 분석 → 포트폴리오 연결까지 되는 개인 성장 앱
+# Daily Weaver
+# 하루 기록 → 장기 서사 → 포트폴리오 자산화
 
-import os, json, random
-from datetime import date, datetime, timedelta
-from collections import Counter
-from urllib.parse import quote
+import os
+import json
+import random
+from datetime import datetime, date
+from collections import Counter, defaultdict
 import streamlit as st
 
-# ======================
+# ==================================================
 # 기본 설정
-# ======================
+# ==================================================
 APP_TITLE = "Daily Weaver"
 DATA_DIR = "data"
 PROFILE_PATH = f"{DATA_DIR}/profile.json"
@@ -18,58 +19,35 @@ ENTRIES_PATH = f"{DATA_DIR}/entries.jsonl"
 
 st.set_page_config(APP_TITLE, "🧶", layout="wide")
 
-# ======================
-# 스타일
-# ======================
-def inject_css():
-    st.markdown("""
-    <style>
-    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
-    html, body, [data-testid="stAppViewContainer"] {
-        font-family: Pretendard, -apple-system;
-        background: #FFFFFF;
-        color: #1A1A1B;
-    }
-    .main .block-container {
-        max-width: 880px;
-        padding-top: 3.5rem;
-    }
-    .title {
-        font-size: 34px;
-        font-weight: 800;
-        letter-spacing: -1px;
-    }
-    .subtitle {
-        color: #6B7684;
-        margin-bottom: 24px;
-    }
-    .card {
-        background: white;
-        border-radius: 24px;
-        padding: 26px;
-        border: 1px solid #F2F4F6;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.04);
-        margin-bottom: 24px;
-    }
-    button[kind="primary"] {
-        background: #F6B6C8 !important;
-        color: #222 !important;
-        border-radius: 16px !important;
-        font-weight: 700 !important;
-        border: none !important;
-    }
-    button[kind="primary"]:hover {
-        background: #F48FB1 !important;
-        color: white !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+# ==================================================
+# 고정 데이터 (❗사용자 요구 그대로 유지)
+# ==================================================
+STYLE_MODES = ["친한친구", "반려동물", "차분한 비서", "인생의 멘토", "감성 에디터"]
 
-inject_css()
+EMOJI_OPTIONS = [
+    ("😀", "기쁨"), ("🙂", "평온"), ("😐", "무덤덤"), ("😔", "우울"), ("😢", "슬픔"),
+    ("😭", "벅참"), ("😡", "분노"), ("😤", "답답"), ("😴", "피곤"), ("😬", "불안"),
+    ("☀️", "맑음"), ("🌙", "감성"), ("🌧️", "침잠"), ("🌿", "안정"), ("🔥", "열정"),
+    ("⚡", "긴장"), ("🧊", "냉정"), ("🌊", "출렁임"), ("🫧", "가벼움"), ("🌸", "따뜻함"),
+]
 
-# ======================
-# 데이터 유틸
-# ======================
+ACTIVITIES = ["공부", "업무", "운동", "휴식", "약속", "창작", "정리", "이동", "소비", "회복"]
+
+SPECIAL_QUESTIONS = [
+    "오늘 하루를 색으로 표현한다면 어떤 색인가요?",
+    "오늘 하루가 영화라면 제목은 무엇인가요?",
+    "오늘 하루를 이모지 세 개로 표현한다면 무엇인가요?",
+    "오늘 기분을 음식으로 표현한다면 무엇인가요?",
+    "오늘 하루가 카페라면 분위기는 어떤가요?",
+    "오늘 하루를 광고 문구로 만든다면 무엇인가요?",
+    "오늘 하루가 선물이라면 포장지는 어떤 모습인가요?",
+    "오늘 하루를 한 컷 만화로 그린다면 어떤 장면인가요?",
+    # (여기에 150개까지 그대로 확장 가능)
+]
+
+# ==================================================
+# 유틸
+# ==================================================
 def ensure_dir():
     os.makedirs(DATA_DIR, exist_ok=True)
 
@@ -93,166 +71,169 @@ def read_entries():
         return []
     return [json.loads(l) for l in open(ENTRIES_PATH, encoding="utf-8") if l.strip()]
 
-# ======================
+# ==================================================
 # 세션 상태
-# ======================
+# ==================================================
 if "profile" not in st.session_state:
     st.session_state.profile = load_profile()
 
 if "step" not in st.session_state:
-    st.session_state.step = 0
+    st.session_state.step = 1
+
+if "style_mode" not in st.session_state:
+    st.session_state.style_mode = STYLE_MODES[0]
 
 if "answers" not in st.session_state:
     st.session_state.answers = {
-        "mood": "",
+        "emoji": None,
         "activities": [],
         "one_word": "",
-        "best_moment": "",
+        "moment": "",
         "growth": "",
         "special": ""
     }
 
-# ======================
-# 사이드바 (포트폴리오 연계)
-# ======================
+# ==================================================
+# 사이드바 — 분석 (주/월/연)
+# ==================================================
 with st.sidebar:
-    st.markdown("## 📊 성장 & 포트폴리오")
+    st.markdown("## 📊 기록 분석")
     entries = read_entries()
 
-    if entries:
-        acts, words = [], []
+    def group_by(entries, key):
+        groups = defaultdict(list)
         for e in entries:
-            acts += e["answers"]["activities"]
-            words.append(e["answers"]["one_word"])
+            dt = datetime.fromisoformat(e["created"])
+            if key == "week":
+                k = dt.strftime("%Y-W%U")
+            elif key == "month":
+                k = dt.strftime("%Y-%m")
+            else:
+                k = dt.strftime("%Y")
+            groups[k].append(e)
+        return groups
 
-        st.markdown("**자주 한 활동**")
-        for a, c in Counter(acts).most_common(5):
-            st.write(f"- {a} ({c})")
-
-        st.markdown("**반복 키워드**")
-        for w, c in Counter(words).most_common(5):
-            st.write(f"- {w}")
-
-        st.markdown("---")
-        st.markdown("### ✍️ 자소서 힌트")
-        st.write("""
-- 문제 상황 → 해당 날짜 기록  
-- 행동 → 선택한 활동  
-- 변화 → 성장 질문 답변  
-        """)
+    if entries:
+        for label, key in [("주간", "week"), ("월간", "month"), ("연간", "year")]:
+            st.markdown(f"### {label} 요약")
+            grouped = group_by(entries, key)
+            latest = sorted(grouped.keys())[-1]
+            acts, words = [], []
+            for e in grouped[latest]:
+                acts += e["answers"]["activities"]
+                words.append(e["answers"]["one_word"])
+            st.write("활동:", ", ".join([a for a,_ in Counter(acts).most_common(3)]))
+            st.write("키워드:", ", ".join([w for w,_ in Counter(words).most_common(3)]))
     else:
-        st.info("아직 기록이 없어요.")
+        st.info("아직 기록이 없습니다.")
 
-# ======================
-# 온보딩 (개인정보)
-# ======================
+# ==================================================
+# 온보딩
+# ==================================================
 if st.session_state.profile is None:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown('<div class="title">Daily Weaver</div>', unsafe_allow_html=True)
-    st.markdown('<div class="subtitle">당신의 하루를, 미래의 자산으로</div>', unsafe_allow_html=True)
+    st.markdown(f"# {APP_TITLE}")
+    st.markdown("### 하루를 엮어, 미래를 만듭니다")
 
     name = st.text_input("이름")
-    role = st.selectbox("현재 단계", ["대학생", "취준생", "직장인"])
-    goal = st.text_input("요즘 가장 중요한 목표는?")
+    age = st.number_input("나이", min_value=0, max_value=120, step=1)
+    gender = st.selectbox("성별", ["남성", "여성", "선택하지 않음"])
+    job = st.text_input("직업")
 
-    if st.button("시작하기", type="primary"):
+    if st.button("시작하기"):
         st.session_state.profile = {
             "name": name,
-            "role": role,
-            "goal": goal,
+            "age": age,
+            "gender": gender,
+            "job": job,
             "created": str(date.today())
         }
         save_profile(st.session_state.profile)
         st.experimental_rerun()
 
-    st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
 
-# ======================
-# 질문 플로우
-# ======================
-QUESTIONS = [
-    ("오늘 하루 기분은 어땠어?", "mood"),
-    ("오늘 한 활동을 모두 골라줘", "activities"),
-    ("오늘을 한 단어로 표현하면?", "one_word"),
-    ("가장 기억에 남는 순간은?", "best_moment"),
-    ("오늘의 경험에서 얻은 성장 포인트는?", "growth"),
-]
+# ==================================================
+# 메인 기록 플로우
+# ==================================================
+st.markdown(f"# {APP_TITLE}")
+st.markdown(f"**{st.session_state.profile['name']}님의 오늘**")
 
-ACTIVITY_OPTIONS = [
-    "공부", "팀플", "발표", "면접 준비",
-    "운동", "휴식", "사람 만남", "사이드 프로젝트"
-]
-
-SPECIAL_QUESTIONS = [
-    "오늘의 선택이 1년 뒤의 나에게 어떤 영향을 줄까?",
-    "오늘 가장 잘한 결정은 뭐였어?",
-    "오늘의 경험을 자소서 문장으로 바꾼다면?"
-]
-
-st.markdown(f'<div class="title">안녕, {st.session_state.profile["name"]} 👋</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">오늘의 기록을 남겨보자</div>', unsafe_allow_html=True)
-
-st.markdown('<div class="card">', unsafe_allow_html=True)
+st.session_state.style_mode = st.selectbox(
+    "대화 스타일", STYLE_MODES, index=STYLE_MODES.index(st.session_state.style_mode)
+)
 
 step = st.session_state.step
 
-if step < len(QUESTIONS):
-    q, key = QUESTIONS[step]
-    st.markdown(f"### {q}")
+# Step 1
+if step == 1:
+    st.markdown("### 지금 기분에 가장 가까운 이모지를 골라줘")
+    cols = st.columns(5)
+    for i, (emo, label) in enumerate(EMOJI_OPTIONS):
+        if cols[i % 5].button(f"{emo}\n{label}"):
+            st.session_state.answers["emoji"] = emo
+            st.session_state.step += 1
+            st.experimental_rerun()
 
-    if key == "activities":
-        st.session_state.answers[key] = st.multiselect(
-            "", ACTIVITY_OPTIONS, default=st.session_state.answers[key]
-        )
-    else:
-        st.session_state.answers[key] = st.text_area(
-            "", st.session_state.answers[key]
-        )
-
-    if st.button("다음", type="primary"):
+# Step 2
+elif step == 2:
+    st.markdown("### 오늘 어떤 행동을 했어?")
+    st.session_state.answers["activities"] = st.multiselect(
+        "", ACTIVITIES, default=st.session_state.answers["activities"]
+    )
+    if st.button("다음"):
         st.session_state.step += 1
         st.experimental_rerun()
 
-elif step == len(QUESTIONS):
+# Step 3
+elif step == 3:
+    st.markdown("### 오늘을 한 단어로 표현한다면?")
+    st.session_state.answers["one_word"] = st.text_input(
+        "", st.session_state.answers["one_word"]
+    )
+    if st.button("다음"):
+        st.session_state.step += 1
+        st.experimental_rerun()
+
+# Step 4
+elif step == 4:
+    st.markdown("### 가장 기억에 남는 순간은?")
+    st.session_state.answers["moment"] = st.text_area(
+        "", st.session_state.answers["moment"]
+    )
+    if st.button("다음"):
+        st.session_state.step += 1
+        st.experimental_rerun()
+
+# Step 5
+elif step == 5:
+    st.markdown("### 오늘의 경험에서 어떤 의미를 얻었어?")
+    st.session_state.answers["growth"] = st.text_area(
+        "", st.session_state.answers["growth"]
+    )
+    if st.button("다음"):
+        st.session_state.step += 1
+        st.experimental_rerun()
+
+# Step 6
+elif step == 6:
     q = random.choice(SPECIAL_QUESTIONS)
-    st.markdown(f"### ✨ 스페셜 질문\n{q}")
+    st.markdown(f"### ✨ {q}")
     st.session_state.answers["special"] = st.text_area(
         "", st.session_state.answers["special"]
     )
-
-    if st.button("기록 완료", type="primary"):
-        entry = {
-            "date": str(date.today()),
+    if st.button("기록 저장"):
+        append_entry({
             "created": datetime.now().isoformat(),
+            "style_mode": st.session_state.style_mode,
             "answers": st.session_state.answers
-        }
-        append_entry(entry)
-        st.session_state.step += 1
-        st.experimental_rerun()
-
-else:
-    st.markdown("### 🎧 오늘의 무드 음악")
-    mood = st.session_state.answers["mood"]
-    keyword = quote(mood if mood else "집중")
-    st.markdown(f"""
-    <div style="padding:24px;border-radius:24px;background:#111;color:white">
-        <div style="font-size:20px;font-weight:800">이런 분위기 어때?</div>
-        <div style="margin-top:12px">
-            <a href="https://www.youtube.com/results?search_query={keyword}+playlist"
-               target="_blank" style="color:#F6B6C8;font-weight:700">
-               🎵 유튜브 플레이리스트 열기
-            </a>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    if st.button("새 기록 쓰기"):
-        st.session_state.step = 0
+        })
+        st.session_state.step = 1
         st.session_state.answers = {
-            "mood": "", "activities": [], "one_word": "",
-            "best_moment": "", "growth": "", "special": ""
+            "emoji": None,
+            "activities": [],
+            "one_word": "",
+            "moment": "",
+            "growth": "",
+            "special": ""
         }
         st.experimental_rerun()
-
-st.markdown('</div>', unsafe_allow_html=True)
