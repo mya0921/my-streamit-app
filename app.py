@@ -19,8 +19,9 @@ APP_TITLE = "Daily Weaver"
 DATA_DIR = "data"
 PROFILE_PATH = os.path.join(DATA_DIR, "profile.json")
 ENTRIES_PATH = os.path.join(DATA_DIR, "entries.jsonl")
+SPECIAL_HISTORY_PATH = os.path.join(DATA_DIR, "special_history.json")
 
-ASSET_LOGO = None  # 로고 쓰고 싶으면 경로 넣기
+ASSET_LOGO = None
 
 
 # =========================
@@ -45,6 +46,7 @@ EMOJI_OPTIONS = [
 
 ACTIVITIES = ["공부", "업무", "운동", "휴식", "약속", "창작", "정리", "이동", "소비", "회복"]
 
+# 스페셜 질문 (150개로 늘릴수록 체감 반복 거의 없음)
 SPECIAL_QUESTIONS = [
     "오늘 하루를 색으로 표현한다면 어떤 색인가요?",
     "오늘 하루가 영화라면 제목은 무엇인가요?",
@@ -54,7 +56,38 @@ SPECIAL_QUESTIONS = [
     "오늘 하루를 광고 문구로 만든다면 무엇인가요?",
     "오늘 하루가 선물이라면 포장지는 어떤 모습인가요?",
     "오늘 하루를 한 컷 만화로 그린다면 어떤 장면인가요?",
-    # ... (150개로 확장)
+    "오늘 하루에 제목을 붙인다면 어떤 제목이 어울리나요?",
+    "오늘 가장 마음에 남은 말 한마디가 있다면 무엇인가요?",
+    "오늘 나를 가장 지탱해준 것은 무엇이었나요?",
+    "오늘 가장 나답다고 느낀 순간은 언제였나요?",
+    "오늘의 나에게 점수를 준다면 몇 점인가요?",
+    "오늘은 어떤 감정이 가장 오래 머물렀나요?",
+    "오늘 내가 가장 잘한 선택은 무엇이었나요?",
+    "오늘 하루가 한 장의 사진이라면 어떤 장면인가요?",
+    "오늘의 나는 어떤 날씨 같았나요?",
+    "오늘 내 마음을 가장 잘 표현하는 노래 제목은 무엇인가요?",
+    "오늘 가장 후회되는 순간이 있다면 무엇인가요?",
+    "오늘 가장 감사했던 순간은 무엇이었나요?",
+    "오늘 하루를 한 문장으로 요약한다면?",
+    "오늘 내가 나를 칭찬해주고 싶은 이유는 무엇인가요?",
+    "오늘 내가 놓치고 싶지 않은 순간은 무엇인가요?",
+    "오늘은 어떤 사람으로 기억되고 싶나요?",
+    "오늘 나를 가장 흔든 사건은 무엇이었나요?",
+    "오늘은 어떤 색감의 하루였나요? (파스텔/모노톤/네온 등)",
+    "오늘 내 마음에 가장 가까운 단어는 무엇인가요?",
+    "오늘 하루를 물건 하나로 표현한다면 무엇인가요?",
+    "오늘 하루가 여행지라면 어디일까요?",
+    "오늘 하루를 만약 그림으로 그린다면 어떤 스타일일까요?",
+    "오늘 내가 더 잘하고 싶었던 것은 무엇인가요?",
+    "오늘 내가 가장 많이 했던 생각은 무엇인가요?",
+    "오늘 나를 웃게 만든 건 무엇이었나요?",
+    "오늘 하루는 어떤 향이 날까요?",
+    "오늘의 나에게 필요한 한마디는 무엇인가요?",
+    "오늘 하루를 만약 일기 제목으로 붙이면?",
+    "오늘은 어떤 순간이 가장 뿌듯했나요?",
+    "오늘 하루는 어떤 감정으로 시작했고 어떤 감정으로 끝났나요?",
+    "오늘은 어떤 순간이 가장 나를 위로했나요?",
+    "오늘 하루를 다시 산다면 가장 먼저 바꾸고 싶은 건 무엇인가요?",
 ]
 
 SONGS = {
@@ -110,18 +143,15 @@ def inject_css():
   --muted: rgba(60,60,67,0.72);
   --hairline: rgba(60,60,67,0.12);
 
-  /* Pink theme (soft) */
   --accent: #F7B6C8;
   --accent-strong: #F48FB1;
   --accent-soft: rgba(247,182,200,0.18);
 
-  /* User bubble (soft) */
   --you-top: #FBE1E8;
   --you-bottom: #F7C8D6;
   --bubble-you: linear-gradient(180deg, var(--you-top) 0%, var(--you-bottom) 100%);
   --bubble-you-text: #111;
 
-  /* Assistant bubble */
   --bubble-them: rgba(255,255,255,0.96);
   --bubble-them-text: #111;
 
@@ -129,7 +159,6 @@ def inject_css():
   --radius: 20px;
 }
 
-/* Background */
 .stApp{
   background:
     radial-gradient(1100px 700px at 15% -10%, rgba(247,182,200,0.22) 0%, rgba(245,245,247,0) 60%),
@@ -146,7 +175,7 @@ def inject_css():
   padding-bottom: 2.6rem;
 }
 
-/* Sidebar iOS glass */
+/* Sidebar glass */
 section[data-testid="stSidebar"]{
   background: rgba(255,255,255,0.58) !important;
   backdrop-filter: blur(22px);
@@ -181,7 +210,7 @@ section[data-testid="stSidebar"] div[role="radiogroup"] label:hover{
   background: rgba(247,182,200,0.12);
 }
 
-/* Sidebar profile chip / avatar */
+/* profile chip */
 .dw-profile-chip{
   display:flex;
   align-items:center;
@@ -232,7 +261,7 @@ section[data-testid="stSidebar"] div[role="radiogroup"] label:hover{
   color: rgba(60,60,67,0.92);
 }
 
-/* ✅ Tabs (주간/월간/연간) active color: red -> pink */
+/* Tabs pink highlight */
 .stTabs [data-baseweb="tab-list"] button[aria-selected="true"]{
   color: rgba(244,143,177,1) !important;
 }
@@ -243,7 +272,7 @@ section[data-testid="stSidebar"] div[role="radiogroup"] label:hover{
   background-color: rgba(244,143,177,1) !important;
 }
 
-/* Header */
+/* header */
 .dw-header{ margin: 0 0 10px 0; }
 .dw-title{
   font-size: 30px;
@@ -258,8 +287,8 @@ section[data-testid="stSidebar"] div[role="radiogroup"] label:hover{
   line-height: 1.5;
 }
 
-/* Chat wrapper */
-.dw-chat{ padding: 10px 8px; background: transparent; border: none; box-shadow:none; }
+/* chat bubbles */
+.dw-chat{ padding: 10px 8px; }
 .dw-row{ display:flex; margin: 10px 0; }
 .dw-row.them{ justify-content:flex-start; }
 .dw-row.you{ justify-content:flex-end; }
@@ -275,7 +304,7 @@ section[data-testid="stSidebar"] div[role="radiogroup"] label:hover{
   font-size: 15px;
 }
 
-/* Assistant bubble */
+/* assistant bubble */
 .dw-bubble.them{
   background: var(--bubble-them);
   color: var(--bubble-them-text);
@@ -295,7 +324,7 @@ section[data-testid="stSidebar"] div[role="radiogroup"] label:hover{
   transform: rotate(45deg);
 }
 
-/* User bubble */
+/* user bubble */
 .dw-bubble.you{
   background: var(--bubble-you);
   color: var(--bubble-you-text);
@@ -315,11 +344,11 @@ section[data-testid="stSidebar"] div[role="radiogroup"] label:hover{
   transform: rotate(45deg);
 }
 
-/* Composer */
-.dw-composer{ margin-top: 12px; border:none; background:transparent; box-shadow:none; padding:0; }
+/* composer */
+.dw-composer{ margin-top: 12px; padding:0; background:transparent; border:none; }
 .dw-hint{ font-size: 13px; color: var(--muted); margin: 0 0 10px 2px; }
 
-/* Inputs */
+/* inputs */
 .stTextInput input,
 .stNumberInput input,
 .stTextArea textarea,
@@ -338,7 +367,7 @@ section[data-testid="stSidebar"] div[role="radiogroup"] label:hover{
   box-shadow: 0 0 0 4px var(--accent-soft) !important;
 }
 
-/* ✅ Primary 버튼: 연핑크 통일 (폼 submit 포함) */
+/* primary buttons */
 button[kind="primary"],
 div[data-testid="stFormSubmitButton"] button{
   background: linear-gradient(180deg, rgba(251,225,232,1) 0%, rgba(247,200,214,1) 100%) !important;
@@ -357,7 +386,7 @@ div.stButton > button:not([kind="primary"]){
   box-shadow: 0 10px 22px rgba(0,0,0,0.06) !important;
 }
 
-/* ✅ Music compact (inside bubble) */
+/* Music compact inside bubble */
 .dw-music-inbubble{
   margin-top: 10px;
   padding-top: 10px;
@@ -373,7 +402,6 @@ div.stButton > button:not([kind="primary"]){
   background: rgba(255,255,255,0.88);
   box-shadow: 0 10px 20px rgba(0,0,0,0.07);
 }
-/* ✅ cover smaller & compact */
 .dw-cover{
   width: 120px;
   height: 120px;
@@ -385,11 +413,33 @@ div.stButton > button:not([kind="primary"]){
 .dw-music-title{ font-size: 16px; font-weight: 900; margin:0; letter-spacing:-0.2px; }
 .dw-music-artist{ font-size: 13px; color: var(--muted); margin: 4px 0 0 0; }
 
-/* ✅ tiny emoji spotify button */
-.dw-spotify-mini{
+/* Fake player progress */
+.dw-progress{
+  margin-top: 10px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(60,60,67,0.10);
+  overflow: hidden;
+}
+.dw-progress-fill{
+  height: 100%;
+  width: 45%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(247,182,200,0.65), rgba(244,143,177,0.9));
+}
+
+/* Spotify row */
+.dw-spotify-row{
   margin-top: 10px;
   display:flex;
-  justify-content:flex-end;
+  justify-content: space-between;
+  align-items:center;
+  gap: 10px;
+}
+.dw-spotify-text{
+  font-size: 13px;
+  font-weight: 800;
+  color: rgba(60,60,67,0.88);
 }
 .dw-spotify-emoji-btn{
   text-decoration:none;
@@ -407,9 +457,6 @@ div.stButton > button:not([kind="primary"]){
 .dw-spotify-emoji-btn:hover{
   background: rgba(247,182,200,0.26);
 }
-
-/* spacing */
-div[data-testid="stMarkdown"]{ margin-bottom: 0.35rem; }
 </style>
         """,
         unsafe_allow_html=True,
@@ -451,6 +498,69 @@ def read_entries() -> list[dict]:
 
 
 # =========================
+# 스페셜 질문 중복 방지 (최근 N일 기록)
+# =========================
+def load_special_history():
+    if os.path.exists(SPECIAL_HISTORY_PATH):
+        try:
+            with open(SPECIAL_HISTORY_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {}
+    return {}
+
+def save_special_history(history: dict):
+    ensure_data_dir()
+    with open(SPECIAL_HISTORY_PATH, "w", encoding="utf-8") as f:
+        json.dump(history, f, ensure_ascii=False, indent=2)
+
+def pick_special_question_unique(today_str: str, avoid_days: int = 14) -> str:
+    """
+    - 오늘 질문은 하루 동안 고정
+    - 최근 avoid_days 동안 사용된 질문은 피함
+    """
+    history = load_special_history()
+
+    # 오늘 질문 이미 있으면 그대로 반환
+    if today_str in history:
+        return history[today_str]
+
+    # 최근 N일 날짜 리스트 생성
+    today_date = datetime.fromisoformat(today_str).date()
+    recent_dates = [(today_date - timedelta(days=i)).isoformat() for i in range(1, avoid_days + 1)]
+
+    recent_used = set()
+    for d in recent_dates:
+        if d in history:
+            recent_used.add(history[d])
+
+    # 후보군: 최근 사용 제외
+    pool = [q for q in SPECIAL_QUESTIONS if q not in recent_used]
+    if not pool:
+        pool = SPECIAL_QUESTIONS[:]  # 다 썼으면 그냥 전체 풀로
+
+    # 날짜 기반 deterministic 선택 (rerun해도 동일하게)
+    seed_val = int(today_str.replace("-", ""))
+    random.seed(seed_val)
+    chosen = random.choice(pool)
+
+    history[today_str] = chosen
+
+    # 오래된 기록 정리 (60일 이상 삭제)
+    cleaned = {}
+    for k, v in history.items():
+        try:
+            kd = datetime.fromisoformat(k).date()
+            if (today_date - kd).days <= 60:
+                cleaned[k] = v
+        except Exception:
+            continue
+
+    save_special_history(cleaned)
+    return chosen
+
+
+# =========================
 # 유틸
 # =========================
 def spotify_search_url(title: str, artist: str) -> str:
@@ -460,13 +570,6 @@ def spotify_search_url(title: str, artist: str) -> str:
 def shorten(text: str, n=40) -> str:
     t = (text or "").strip().replace("\n", " ")
     return t if len(t) <= n else t[:n] + "…"
-
-def today_seed() -> str:
-    return st.session_state.today
-
-def pick_today_special_question() -> str:
-    random.seed(today_seed())
-    return random.choice(SPECIAL_QUESTIONS)
 
 def infer_tag(mood_text: str, activities: list[str], one_word: str) -> str:
     text = f"{mood_text} {one_word}".lower()
@@ -487,13 +590,14 @@ def infer_tag(mood_text: str, activities: list[str], one_word: str) -> str:
 
 def pick_song(tag: str) -> dict:
     pool = SONGS.get(tag, SONGS["chill"])
-    random.seed(today_seed() + tag)
+    random.seed(st.session_state.today + tag)
     return random.choice(pool)
 
 def closing_message(style_mode: str, name: str, one_word: str, best: str, growth: str) -> str:
     best_s = shorten(best, 36)
     growth_s = shorten(growth, 36)
-    random.seed(today_seed() + (one_word or "") + best_s)
+
+    random.seed(st.session_state.today + (one_word or "") + best_s)
 
     cheers = [
         "오늘도 정말 수고했어요.",
@@ -505,7 +609,7 @@ def closing_message(style_mode: str, name: str, one_word: str, best: str, growth
     cheer = random.choice(cheers)
 
     if style_mode == "친한친구":
-        return f"오늘은 **{one_word}**라는 단어가 참 잘 어울리는 하루였어요. 특히 {best_s} 그 장면이 오래 남을 것 같아요. {cheer}"
+        return f"오늘은 **{one_word}**라는 단어가 참 잘 어울리는 하루였어. 특히 {best_s} 그 장면이 오래 남을 것 같아. {cheer}"
     if style_mode == "반려동물":
         return f"{name}님, 오늘 기록 남겨줘서 고마워요 🐾 오늘은 **{one_word}** 같은 하루였네요. {growth_s} 이 마음을 남긴 게 멋져요. {cheer}"
     if style_mode == "차분한 비서":
@@ -521,10 +625,7 @@ def parse_entry_date(e: dict):
     try:
         return datetime.fromisoformat(d).date()
     except Exception:
-        try:
-            return datetime.strptime(d, "%Y-%m-%d").date()
-        except Exception:
-            return None
+        return None
 
 def filter_entries_last_days(entries: list[dict], days: int) -> list[dict]:
     today_ = datetime.fromisoformat(st.session_state.today).date()
@@ -538,7 +639,7 @@ def filter_entries_last_days(entries: list[dict], days: int) -> list[dict]:
 
 
 # =========================
-# 성장서사(주/월/년) 출력
+# 성장서사
 # =========================
 def show_growth_summary(entries: list[dict], title: str):
     if not entries:
@@ -615,10 +716,10 @@ def init_state():
         st.session_state.today = date.today().isoformat()
 
     if "special_q" not in st.session_state:
-        st.session_state.special_q = pick_today_special_question()
+        st.session_state.special_q = pick_special_question_unique(st.session_state.today, avoid_days=14)
 
     if "step" not in st.session_state:
-        st.session_state.step = 0  # 0 대기, 1~6 질문, 7 완료
+        st.session_state.step = 0
 
     if "chat_started" not in st.session_state:
         st.session_state.chat_started = False
@@ -647,17 +748,15 @@ def push_user(msg: str):
 
 
 # =========================
-# iMessage-style chat renderer
+# iMessage-style renderer
 # =========================
 def render_chat():
     st.markdown('<div class="dw-chat">', unsafe_allow_html=True)
 
-    if not st.session_state.chat_log:
-        st.markdown('<div class="dw-hint">아래에 한마디 보내면 대화가 시작돼요.</div>', unsafe_allow_html=True)
-
     for m in st.session_state.chat_log:
         role = "them" if m["role"] == "app" else "you"
         content = (m.get("content") or "").replace("\n", "<br/>")
+
         st.markdown(
             f"""
 <div class="dw-row {role}">
@@ -698,7 +797,9 @@ inject_css()
 init_state()
 
 
-# ---- Sidebar ----
+# =========================
+# Sidebar
+# =========================
 with st.sidebar:
     st.subheader("대화 스타일")
     current_label = f"{STYLE_EMOJI[st.session_state.style_mode]} {st.session_state.style_mode}"
@@ -771,7 +872,9 @@ with st.sidebar:
         show_growth_summary(filter_entries_last_days(all_entries, 365), "올해 성장서사")
 
 
-# ---- Main Header ----
+# =========================
+# Header
+# =========================
 if ASSET_LOGO and os.path.exists(ASSET_LOGO):
     st.image(ASSET_LOGO, width=160)
 
@@ -792,7 +895,7 @@ st.markdown(
 # =========================
 if st.session_state.show_onboarding:
     st.markdown('<div class="dw-composer">', unsafe_allow_html=True)
-    st.markdown('<div class="dw-hint"><b>처음 한 번만 입력</b>하면 더 자연스럽게 기록할 수 있어요. (사이드바에서 언제든 수정 가능)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="dw-hint"><b>처음 한 번만 입력</b>하면 더 자연스럽게 기록할 수 있어요.</div>', unsafe_allow_html=True)
 
     with st.form("profile_form", clear_on_submit=False):
         current = st.session_state.profile or {}
@@ -840,7 +943,7 @@ st.write("")
 
 
 # =========================
-# 대기 상태(채팅 시작)
+# 대기 상태(시작)
 # =========================
 if not st.session_state.chat_started and st.session_state.step == 0:
     start_msg = st.chat_input("한마디만 보내서 기록을 시작해요 (예: 시작하자)")
@@ -852,6 +955,7 @@ if not st.session_state.chat_started and st.session_state.step == 0:
         profile = st.session_state.profile or {}
         name = profile.get("name", "사용자")
         mode = st.session_state.style_mode
+
         if mode == "차분한 비서":
             push_app(f"{name}님, 오늘의 기록을 시작하겠습니다.")
         elif mode == "반려동물":
@@ -876,7 +980,7 @@ step = st.session_state.step
 a = st.session_state.answers
 
 
-# Step 1 — 기분 선택
+# Step 1
 if step == 1:
     st.markdown('<div class="dw-composer">', unsafe_allow_html=True)
     st.markdown('<div class="dw-hint">기분을 선택하고 <b>전송</b>하세요.</div>', unsafe_allow_html=True)
@@ -896,7 +1000,7 @@ if step == 1:
         next_step()
 
 
-# Step 2 — 활동 선택(복수)
+# Step 2
 elif step == 2:
     st.markdown('<div class="dw-composer">', unsafe_allow_html=True)
     st.markdown('<div class="dw-hint">오늘 한 일을 고르고 <b>전송</b>하세요. (복수 선택 가능)</div>', unsafe_allow_html=True)
@@ -916,7 +1020,7 @@ elif step == 2:
         next_step()
 
 
-# Step 3 — 한 단어(텍스트)
+# Step 3
 elif step == 3:
     msg = st.chat_input("한 단어를 보내주세요 (예: 버팀, 리셋, 반짝임)")
     if msg:
@@ -926,10 +1030,10 @@ elif step == 3:
         next_step()
 
 
-# Step 4 — 베스트 모먼트(멀티라인)
+# Step 4
 elif step == 4:
     st.markdown('<div class="dw-composer">', unsafe_allow_html=True)
-    st.markdown('<div class="dw-hint">장면을 적고 <b>전송</b>하세요. (길게 적어도 좋아요)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="dw-hint">장면을 적고 <b>전송</b>하세요.</div>', unsafe_allow_html=True)
 
     best = st.text_area(
         "",
@@ -951,7 +1055,7 @@ elif step == 4:
         next_step()
 
 
-# Step 5 — 성장(멀티라인)
+# Step 5
 elif step == 5:
     st.markdown('<div class="dw-composer">', unsafe_allow_html=True)
     st.markdown('<div class="dw-hint">성장 포인트를 적고 <b>전송</b>하세요.</div>', unsafe_allow_html=True)
@@ -976,7 +1080,7 @@ elif step == 5:
         next_step()
 
 
-# Step 6 — 스페셜(멀티라인)
+# Step 6
 elif step == 6:
     st.markdown('<div class="dw-composer">', unsafe_allow_html=True)
     st.markdown('<div class="dw-hint">답을 적고 <b>기록 마무리</b>를 눌러주세요.</div>', unsafe_allow_html=True)
@@ -1000,7 +1104,7 @@ elif step == 6:
         next_step()
 
 
-# Step 7 — 완료: 마무리 + 추천곡(컴팩트 + 태그 제거 + 작은 이모지 버튼)
+# Step 7
 elif step == 7:
     profile = st.session_state.profile or {}
     name = profile.get("name", "사용자")
@@ -1041,16 +1145,22 @@ elif step == 7:
     append_entry(entry)
 
     if not st.session_state.final_pushed:
-        # ✅ compact bubble: cover + title/artist + tiny emoji button only
         music_html = f"""
 <b>{closing}</b>
+
 <div class="dw-music-inbubble">
   <div class="dw-music-card">
     <img class="dw-cover" src="{song["cover_url"]}" />
     <div style="flex:1;">
       <p class="dw-music-title">{song["title"]}</p>
       <p class="dw-music-artist">{song["artist"]}</p>
-      <div class="dw-spotify-mini">
+
+      <div class="dw-progress">
+        <div class="dw-progress-fill"></div>
+      </div>
+
+      <div class="dw-spotify-row">
+        <div class="dw-spotify-text">Spotify에서 바로 감상하기</div>
         <a class="dw-spotify-emoji-btn" href="{link}" target="_blank" title="Spotify 열기">🎧</a>
       </div>
     </div>
@@ -1068,6 +1178,7 @@ elif step == 7:
         st.session_state.chat_started = False
         st.session_state.chat_log = []
         st.session_state.final_pushed = False
+
         st.session_state.answers = {
             "mood": None,
             "activities": [],
@@ -1076,5 +1187,10 @@ elif step == 7:
             "growth": "",
             "special_answer": "",
         }
+
+        # 다음 실행에서도 스페셜 질문 새로 뽑히도록
+        if "special_q" in st.session_state:
+            del st.session_state.special_q
+
         st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
