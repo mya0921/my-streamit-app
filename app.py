@@ -34,7 +34,7 @@ STYLE_EMOJI = {
     "인생의 멘토": "🧭",
     "감성 에디터": "📝",
 }
-STYLE_OPTIONS = [f"{STYLE_EMOJI[s]} {s}" for s in STYLE_MODES]  # 라디오 표시용
+STYLE_OPTIONS = [f"{STYLE_EMOJI[s]} {s}" for s in STYLE_MODES]
 
 EMOJI_OPTIONS = [
     ("😀", "기쁨"), ("🙂", "평온"), ("😐", "무덤덤"), ("😔", "우울"), ("😢", "슬픔"),
@@ -96,15 +96,6 @@ SONGS = {
     ],
 }
 
-TAG_LABEL = {
-    "comfort": "위로",
-    "chill": "잔잔",
-    "energetic": "에너지",
-    "focus": "집중",
-    "reset": "리셋",
-    "sentimental": "감성",
-}
-
 
 # =========================
 # 스타일(CSS)
@@ -162,9 +153,7 @@ section[data-testid="stSidebar"]{
   -webkit-backdrop-filter: blur(22px);
   border-right: 1px solid rgba(60,60,67,0.10) !important;
 }
-section[data-testid="stSidebar"] .block-container{
-  padding-top: 1.1rem;
-}
+section[data-testid="stSidebar"] .block-container{ padding-top: 1.1rem; }
 section[data-testid="stSidebar"] h3{
   font-size: 14px !important;
   font-weight: 900 !important;
@@ -178,8 +167,6 @@ section[data-testid="stSidebar"] hr{
   background: rgba(60,60,67,0.10);
   margin: 0.9rem 0;
 }
-
-/* Sidebar radio wrapper */
 section[data-testid="stSidebar"] div[role="radiogroup"]{
   padding: 8px 10px;
   border-radius: 16px;
@@ -243,6 +230,17 @@ section[data-testid="stSidebar"] div[role="radiogroup"] label:hover{
   font-size: 12px;
   font-weight: 900;
   color: rgba(60,60,67,0.92);
+}
+
+/* ✅ Tabs (주간/월간/연간) active color: red -> pink */
+.stTabs [data-baseweb="tab-list"] button[aria-selected="true"]{
+  color: rgba(244,143,177,1) !important;
+}
+.stTabs [data-baseweb="tab-list"] button[aria-selected="true"] > div{
+  color: rgba(244,143,177,1) !important;
+}
+.stTabs [data-baseweb="tab-highlight"]{
+  background-color: rgba(244,143,177,1) !important;
 }
 
 /* Header */
@@ -340,8 +338,9 @@ section[data-testid="stSidebar"] div[role="radiogroup"] label:hover{
   box-shadow: 0 0 0 4px var(--accent-soft) !important;
 }
 
-/* ✅ Primary 버튼 (저장/전송/마무리): 연핑크 무드 통일 */
-button[kind="primary"]{
+/* ✅ Primary 버튼: 연핑크 통일 (폼 submit 포함) */
+button[kind="primary"],
+div[data-testid="stFormSubmitButton"] button{
   background: linear-gradient(180deg, rgba(251,225,232,1) 0%, rgba(247,200,214,1) 100%) !important;
   color: #111 !important;
   border: none !important;
@@ -358,7 +357,7 @@ div.stButton > button:not([kind="primary"]){
   box-shadow: 0 10px 22px rgba(0,0,0,0.06) !important;
 }
 
-/* Music inside bubble */
+/* ✅ Music compact (inside bubble) */
 .dw-music-inbubble{
   margin-top: 10px;
   padding-top: 10px;
@@ -366,82 +365,47 @@ div.stButton > button:not([kind="primary"]){
 }
 .dw-music-card{
   display:flex;
-  gap: 14px;
-  align-items:center;
-  padding: 10px;
-  border-radius: 18px;
-  border: 1px solid rgba(60,60,67,0.12);
-  background: rgba(255,255,255,0.90);
-  box-shadow: 0 12px 26px rgba(0,0,0,0.08);
-}
-/* cover bigger */
-.dw-cover{
-  width: 190px;
-  height: 190px;
-  border-radius: 20px;
-  object-fit: cover;
-  border: 1px solid rgba(60,60,67,0.12);
-  box-shadow: 0 12px 26px rgba(0,0,0,0.12);
-}
-.dw-music-title{ font-size: 18px; font-weight: 900; margin:0; letter-spacing:-0.2px; }
-.dw-music-artist{ font-size: 14px; color: var(--muted); margin: 6px 0 0 0; }
-.dw-tag{
-  display:inline-block;
-  font-size: 12px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(247,182,200,0.9);
-  background: rgba(247,182,200,0.18);
-  font-weight: 900;
-  color: rgba(60,60,67,0.95);
-  margin-top: 10px;
-}
-
-/* ✅ Spotify 이동 카드 버튼 */
-.dw-spotify-card{
-  margin-top: 10px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
   gap: 12px;
-  padding: 12px 14px;
+  align-items:center;
+  padding: 8px;
   border-radius: 16px;
   border: 1px solid rgba(60,60,67,0.12);
-  background: rgba(247,182,200,0.16);
+  background: rgba(255,255,255,0.88);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.07);
 }
-.dw-spotify-left{
-  display:flex; align-items:center; gap:10px;
-}
-.dw-spotify-icon{
-  width: 28px; height: 28px; border-radius: 10px;
-  background: rgba(255,255,255,0.75);
-  border: 1px solid rgba(60,60,67,0.10);
-  display:flex; align-items:center; justify-content:center;
-  font-weight: 900;
-}
-.dw-spotify-title{
-  font-weight: 900;
-  font-size: 13px;
-  margin:0;
-  color: rgba(60,60,67,0.95);
-}
-.dw-spotify-sub{
-  font-size: 12px;
-  margin: 2px 0 0 0;
-  color: rgba(60,60,67,0.72);
-}
-.dw-spotify-btn{
-  text-decoration:none;
-  font-weight: 900;
-  font-size: 12px;
-  color: rgba(60,60,67,0.95);
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.75);
+/* ✅ cover smaller & compact */
+.dw-cover{
+  width: 120px;
+  height: 120px;
+  border-radius: 16px;
+  object-fit: cover;
   border: 1px solid rgba(60,60,67,0.12);
+  box-shadow: 0 10px 18px rgba(0,0,0,0.10);
 }
-.dw-spotify-btn:hover{
-  background: rgba(255,255,255,0.95);
+.dw-music-title{ font-size: 16px; font-weight: 900; margin:0; letter-spacing:-0.2px; }
+.dw-music-artist{ font-size: 13px; color: var(--muted); margin: 4px 0 0 0; }
+
+/* ✅ tiny emoji spotify button */
+.dw-spotify-mini{
+  margin-top: 10px;
+  display:flex;
+  justify-content:flex-end;
+}
+.dw-spotify-emoji-btn{
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width: 38px;
+  height: 32px;
+  border-radius: 12px;
+  background: rgba(247,182,200,0.18);
+  border: 1px solid rgba(247,182,200,0.40);
+  box-shadow: 0 10px 18px rgba(244,143,177,0.10);
+  font-size: 16px;
+}
+.dw-spotify-emoji-btn:hover{
+  background: rgba(247,182,200,0.26);
 }
 
 /* spacing */
@@ -737,8 +701,6 @@ init_state()
 # ---- Sidebar ----
 with st.sidebar:
     st.subheader("대화 스타일")
-
-    # 표시용 옵션(이모지 포함) -> 실제 스타일 값으로 매핑
     current_label = f"{STYLE_EMOJI[st.session_state.style_mode]} {st.session_state.style_mode}"
     idx = STYLE_OPTIONS.index(current_label) if current_label in STYLE_OPTIONS else 0
     chosen_label = st.radio(
@@ -750,8 +712,8 @@ with st.sidebar:
     st.session_state.style_mode = chosen_label.split(" ", 1)[1]
 
     st.divider()
-
     st.subheader("내 프로필")
+
     prof = st.session_state.profile or {}
     name = prof.get("name", "사용자")
     job = prof.get("job", "")
@@ -767,7 +729,6 @@ with st.sidebar:
         meta_parts.append(job)
     meta = " · ".join(meta_parts) if meta_parts else "프로필을 설정해 주세요"
 
-    # 아바타 + 칩 UI
     initial = (name[:1] if name else "U")
     st.markdown(
         f"""
@@ -836,21 +797,11 @@ if st.session_state.show_onboarding:
     with st.form("profile_form", clear_on_submit=False):
         current = st.session_state.profile or {}
 
-        # ✅ 수직으로 하나씩
         name = st.text_input("이름", value=current.get("name", ""), placeholder="예: 연세")
         age_val = current.get("age")
-        age = st.number_input(
-            "나이",
-            min_value=0,
-            max_value=120,
-            value=int(age_val) if isinstance(age_val, int) else 20,
-            step=1,
-        )
-        gender = st.selectbox(
-            "성별",
-            ["선택 안 함", "여성", "남성"],
-            index=["선택 안 함", "여성", "남성"].index(current.get("gender", "선택 안 함")),
-        )
+        age = st.number_input("나이", min_value=0, max_value=120, value=int(age_val) if isinstance(age_val, int) else 20, step=1)
+        gender = st.selectbox("성별", ["선택 안 함", "여성", "남성"],
+                              index=["선택 안 함", "여성", "남성"].index(current.get("gender", "선택 안 함")))
         job = st.text_input("직업", value=current.get("job", ""), placeholder="예: 대학생, 기획자, 개발자")
 
         colA, colB = st.columns(2)
@@ -1049,7 +1000,7 @@ elif step == 6:
         next_step()
 
 
-# Step 7 — 완료: 마무리 + 추천곡(말풍선 안 + Spotify 이동 카드)
+# Step 7 — 완료: 마무리 + 추천곡(컴팩트 + 태그 제거 + 작은 이모지 버튼)
 elif step == 7:
     profile = st.session_state.profile or {}
     name = profile.get("name", "사용자")
@@ -1090,26 +1041,17 @@ elif step == 7:
     append_entry(entry)
 
     if not st.session_state.final_pushed:
+        # ✅ compact bubble: cover + title/artist + tiny emoji button only
         music_html = f"""
 <b>{closing}</b>
 <div class="dw-music-inbubble">
-  <div style="font-weight:900; margin-bottom:8px;">오늘의 추천곡 🎧</div>
   <div class="dw-music-card">
     <img class="dw-cover" src="{song["cover_url"]}" />
-    <div>
+    <div style="flex:1;">
       <p class="dw-music-title">{song["title"]}</p>
       <p class="dw-music-artist">{song["artist"]}</p>
-      <div class="dw-tag">{TAG_LABEL.get(tag, tag)}</div>
-
-      <div class="dw-spotify-card">
-        <div class="dw-spotify-left">
-          <div class="dw-spotify-icon">♪</div>
-          <div>
-            <p class="dw-spotify-title">Spotify로 바로 이동하기</p>
-            <p class="dw-spotify-sub">새 탭에서 열립니다</p>
-          </div>
-        </div>
-        <a class="dw-spotify-btn" href="{link}" target="_blank">열기 →</a>
+      <div class="dw-spotify-mini">
+        <a class="dw-spotify-emoji-btn" href="{link}" target="_blank" title="Spotify 열기">🎧</a>
       </div>
     </div>
   </div>
