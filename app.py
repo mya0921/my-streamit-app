@@ -99,7 +99,7 @@ TAG_LABEL = {
 
 
 # =========================
-# 스타일(CSS): iMessage-like bubbles + 연핑크 통일 + "흰 박스" 제거
+# 스타일(CSS): iMessage-like bubbles + 연핑크 더 연하게 + 음악 카드 버블용
 # =========================
 def inject_css():
     st.markdown(
@@ -111,14 +111,18 @@ def inject_css():
   --muted: rgba(60,60,67,0.72);
   --hairline: rgba(60,60,67,0.12);
 
-  /* Pink theme */
+  /* Pink theme (soft) */
   --accent: #F7B6C8;
   --accent-strong: #F48FB1;
   --accent-soft: rgba(247,182,200,0.18);
 
-  /* Bubbles */
-  --bubble-you: linear-gradient(180deg, rgba(247,182,200,1) 0%, rgba(244,143,177,1) 100%);
+  /* ✅ User bubble: 더 연하게 */
+  --you-top: #FBE1E8;     /* very light pink */
+  --you-bottom: #F7C8D6;  /* soft pink */
+  --bubble-you: linear-gradient(180deg, var(--you-top) 0%, var(--you-bottom) 100%);
   --bubble-you-text: #111;
+
+  /* Assistant bubble */
   --bubble-them: rgba(255,255,255,0.96);
   --bubble-them-text: #111;
 
@@ -128,8 +132,8 @@ def inject_css():
 
 .stApp{
   background:
-    radial-gradient(1100px 700px at 15% -10%, rgba(247,182,200,0.26) 0%, rgba(245,245,247,0) 60%),
-    radial-gradient(900px 600px at 98% 12%, rgba(247,182,200,0.18) 0%, rgba(245,245,247,0) 55%),
+    radial-gradient(1100px 700px at 15% -10%, rgba(247,182,200,0.22) 0%, rgba(245,245,247,0) 60%),
+    radial-gradient(900px 600px at 98% 12%, rgba(247,182,200,0.16) 0%, rgba(245,245,247,0) 55%),
     var(--bg) !important;
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
@@ -150,7 +154,7 @@ section[data-testid="stSidebar"]{
   border-right: 1px solid var(--hairline) !important;
 }
 
-/* Header (no card, no white box) */
+/* Header */
 .dw-header{ margin: 0 0 10px 0; }
 .dw-title{
   font-size: 30px;
@@ -165,7 +169,7 @@ section[data-testid="stSidebar"]{
   line-height: 1.5;
 }
 
-/* Chat wrapper: ✅ 흰 박스 제거 (border/background/box-shadow 제거) */
+/* Chat wrapper (no box) */
 .dw-chat{
   padding: 10px 8px;
   border: none;
@@ -190,7 +194,7 @@ section[data-testid="stSidebar"]{
   font-size: 15px;
 }
 
-/* Left bubble (assistant) */
+/* Assistant bubble */
 .dw-bubble.them{
   background: var(--bubble-them);
   color: var(--bubble-them-text);
@@ -210,11 +214,11 @@ section[data-testid="stSidebar"]{
   transform: rotate(45deg);
 }
 
-/* Right bubble (user) */
+/* ✅ User bubble (lighter) */
 .dw-bubble.you{
   background: var(--bubble-you);
   color: var(--bubble-you-text);
-  border: 1px solid rgba(244,143,177,0.20);
+  border: 1px solid rgba(244,143,177,0.12);
   border-bottom-right-radius: 8px;
 }
 .dw-bubble.you:after{
@@ -224,13 +228,13 @@ section[data-testid="stSidebar"]{
   bottom: 10px;
   width: 10px;
   height: 10px;
-  background: rgba(244,143,177,1);
-  border-right: 1px solid rgba(244,143,177,0.20);
-  border-bottom: 1px solid rgba(244,143,177,0.20);
+  background: var(--you-bottom);
+  border-right: 1px solid rgba(244,143,177,0.12);
+  border-bottom: 1px solid rgba(244,143,177,0.12);
   transform: rotate(45deg);
 }
 
-/* ✅ Composer wrapper: 흰 박스(큰 캡슐) 제거 */
+/* Composer wrapper (no box) */
 .dw-composer{
   margin-top: 12px;
   border: none;
@@ -244,7 +248,7 @@ section[data-testid="stSidebar"]{
   margin: 0 0 10px 2px;
 }
 
-/* Inputs: 살짝만 iOS 느낌으로 (입력 위젯 자체는 필요) */
+/* Inputs */
 .stTextInput input,
 .stNumberInput input,
 .stTextArea textarea,
@@ -265,13 +269,13 @@ section[data-testid="stSidebar"]{
 
 /* Buttons */
 button[kind="primary"]{
-  background: linear-gradient(180deg, rgba(247,182,200,1) 0%, rgba(244,143,177,1) 100%) !important;
+  background: linear-gradient(180deg, rgba(251,225,232,1) 0%, rgba(247,200,214,1) 100%) !important;
   color: #111 !important;
   border: none !important;
   border-radius: 999px !important;
   font-weight: 900 !important;
   padding: 0.62rem 1.05rem !important;
-  box-shadow: 0 12px 26px rgba(244,143,177,0.22) !important;
+  box-shadow: 0 12px 26px rgba(244,143,177,0.18) !important;
 }
 div.stButton > button:not([kind="primary"]){
   background: rgba(255,255,255,0.85) !important;
@@ -281,20 +285,35 @@ div.stButton > button:not([kind="primary"]){
   box-shadow: 0 10px 22px rgba(0,0,0,0.06) !important;
 }
 
-/* Music card */
+/* ✅ Music bubble content (inside assistant bubble) */
+.dw-music-inbubble{
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(60,60,67,0.10);
+}
+
 .dw-music-card{
   display:flex;
   gap: 14px;
   align-items:center;
-  padding: 14px;
-  border-radius: 22px;
+  padding: 10px;
+  border-radius: 18px;
   border: 1px solid rgba(60,60,67,0.12);
-  background: rgba(255,255,255,0.92);
-  box-shadow: 0 16px 36px rgba(0,0,0,0.08);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: rgba(255,255,255,0.90);
+  box-shadow: 0 12px 26px rgba(0,0,0,0.08);
 }
-.dw-music-title{ font-size: 18px; font-weight: 900; margin:0; }
+
+/* ✅ Cover bigger */
+.dw-cover{
+  width: 160px;
+  height: 160px;
+  border-radius: 18px;
+  object-fit: cover;
+  border: 1px solid rgba(60,60,67,0.12);
+  box-shadow: 0 12px 26px rgba(0,0,0,0.12);
+}
+
+.dw-music-title{ font-size: 18px; font-weight: 900; margin:0; letter-spacing:-0.2px; }
 .dw-music-artist{ font-size: 14px; color: var(--muted); margin: 6px 0 0 0; }
 .dw-tag{
   display:inline-block;
@@ -308,7 +327,7 @@ div.stButton > button:not([kind="primary"]){
   margin-top: 10px;
 }
 
-/* Optional: hide default st markdown blank blocks spacing a bit */
+/* Spacing */
 div[data-testid="stMarkdown"]{ margin-bottom: 0.35rem; }
 </style>
         """,
@@ -571,7 +590,7 @@ def render_chat():
 
 
 # =========================
-# 선택 UI: 가능한 경우 st.pills 우선 사용
+# 선택 UI
 # =========================
 def choose_single_pills(label: str, options: list[str], key: str):
     if hasattr(st, "pills"):
@@ -635,7 +654,7 @@ with st.sidebar:
         show_growth_summary(filter_entries_last_days(all_entries, 365), "올해 성장서사")
 
 
-# ---- Main Header (흰 박스 제거된 상태) ----
+# ---- Main Header ----
 if ASSET_LOGO and os.path.exists(ASSET_LOGO):
     st.image(ASSET_LOGO, width=160)
 
@@ -739,7 +758,7 @@ if not st.session_state.chat_started and st.session_state.step == 0:
 
 
 # =========================
-# 질문 플로우 (대화형 말풍선 + 전송)
+# 질문 플로우
 # =========================
 step = st.session_state.step
 a = st.session_state.answers
@@ -869,7 +888,7 @@ elif step == 6:
         next_step()
 
 
-# Step 7 — 완료
+# Step 7 — 완료: 마무리 + 추천곡을 말풍선 안에
 elif step == 7:
     profile = st.session_state.profile or {}
     name = profile.get("name", "사용자")
@@ -909,32 +928,34 @@ elif step == 7:
     }
     append_entry(entry)
 
-    # 한 번만 말풍선으로 추가
+    # ✅ 한 번만: "마무리 + 음악카드"를 하나의 말풍선(assistant)로 넣기
     if not st.session_state.final_pushed:
-        push_app(closing)
-        push_app("오늘의 추천곡은 이 노래예요.")
+        music_html = f"""
+<b>{closing}</b>
+<div class="dw-music-inbubble">
+  <div style="font-weight:900; margin-bottom:8px;">오늘의 추천곡 🎧</div>
+  <div class="dw-music-card">
+    <img class="dw-cover" src="{song["cover_url"]}" />
+    <div>
+      <p class="dw-music-title">{song["title"]}</p>
+      <p class="dw-music-artist">{song["artist"]}</p>
+      <div class="dw-tag">{TAG_LABEL.get(tag, tag)}</div>
+      <div style="margin-top:10px;">
+        <a href="{link}" target="_blank" style="text-decoration:none; font-weight:900; color: rgba(60,60,67,0.95);">
+          Spotify에서 듣기 →
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+        """.strip()
+
+        push_app(music_html)
         st.session_state.final_pushed = True
         st.rerun()
 
-    # 추천곡 카드 + 링크 + 다시하기
+    # 다시하기 버튼만 아래에
     st.markdown('<div class="dw-composer">', unsafe_allow_html=True)
-    st.markdown(
-        f"""
-<div class="dw-music-card">
-  <img src="{song["cover_url"]}" width="120" height="120"
-       style="border-radius: 18px; border: 1px solid rgba(60,60,67,0.12); box-shadow: 0 10px 24px rgba(0,0,0,0.10);" />
-  <div>
-    <p class="dw-music-title">{song["title"]}</p>
-    <p class="dw-music-artist">{song["artist"]}</p>
-    <div class="dw-tag">{TAG_LABEL.get(tag, tag)}</div>
-  </div>
-</div>
-        """,
-        unsafe_allow_html=True,
-    )
-    st.write("")
-    st.link_button("Spotify에서 듣기", link)
-    st.write("")
     if st.button("오늘 기록 다시 하기", use_container_width=True):
         st.session_state.step = 0
         st.session_state.chat_started = False
