@@ -55,7 +55,6 @@ SPECIAL_QUESTIONS = [
 ]
 
 # 추천곡(Spotify API 없이): 태그별 큐레이션
-# cover_url은 나중에 원하는 이미지로 교체하면 됨(로컬 이미지로도 가능)
 SONGS = {
     "comfort": [
         {"title": "Love Poem", "artist": "아이유",
@@ -106,38 +105,31 @@ TAG_LABEL = {
 
 
 # =========================
-# 스타일(CSS): iOS Glass + 연핑크 포인트
+# 스타일(CSS): iOS Glass + 연핑크 포인트 + Progress + Footer bar
 # =========================
 def inject_css():
     st.markdown(
         """
 <style>
-/* =========================
-   Daily Weaver — iOS clean UI (Light Pink Accent)
-   ========================= */
-
-/* iOS-ish system font stack */
 :root{
-  --bg: #F5F5F7;            /* iOS light gray */
+  --bg: #F5F5F7;
   --card: rgba(255,255,255,0.92);
   --card-solid: #FFFFFF;
   --text: #111111;
-  --muted: rgba(60,60,67,0.72);     /* iOS secondary label */
-  --hairline: rgba(60,60,67,0.12);  /* iOS separator */
+  --muted: rgba(60,60,67,0.72);
+  --hairline: rgba(60,60,67,0.12);
   --shadow: 0 18px 45px rgba(0,0,0,0.08);
   --shadow-soft: 0 10px 24px rgba(0,0,0,0.06);
   --radius-xl: 22px;
   --radius-lg: 18px;
   --radius-md: 14px;
 
-  /* main color: light pink */
   --accent: #F7B6C8;
   --accent-strong: #F48FB1;
   --accent-weak: rgba(247,182,200,0.20);
   --accent-weak2: rgba(247,182,200,0.12);
 }
 
-/* App background */
 .stApp {
   background: radial-gradient(1200px 700px at 20% -10%, rgba(247,182,200,0.28) 0%, rgba(245,245,247,0) 60%),
               radial-gradient(900px 600px at 95% 10%, rgba(247,182,200,0.18) 0%, rgba(245,245,247,0) 55%),
@@ -147,14 +139,12 @@ def inject_css():
                "Apple SD Gothic Neo", "Pretendard", "Noto Sans KR", Segoe UI, Roboto, Helvetica, Arial, sans-serif;
 }
 
-/* Main container width + spacing */
 .main .block-container{
   max-width: 980px;
   padding-top: 2.0rem;
-  padding-bottom: 3.0rem;
+  padding-bottom: 5.5rem; /* footer-bar 여유 */
 }
 
-/* Sidebar (glass) */
 section[data-testid="stSidebar"]{
   background: rgba(255,255,255,0.70) !important;
   backdrop-filter: blur(18px);
@@ -165,7 +155,6 @@ section[data-testid="stSidebar"] .block-container{
   padding-top: 1.2rem;
 }
 
-/* Typography */
 .dw-title{
   font-size: 34px;
   font-weight: 900;
@@ -186,7 +175,6 @@ section[data-testid="stSidebar"] .block-container{
   line-height: 1.55;
 }
 
-/* Question title/desc */
 .dw-qtitle{
   font-size: 22px;
   font-weight: 900;
@@ -199,7 +187,6 @@ section[data-testid="stSidebar"] .block-container{
   margin: 0 0 14px 0;
 }
 
-/* Cards (glass + soft shadow) */
 .dw-card{
   background: var(--card);
   border: 1px solid var(--hairline);
@@ -208,17 +195,12 @@ section[data-testid="stSidebar"] .block-container{
   box-shadow: var(--shadow);
 }
 
-/* Divider */
 .dw-divider{
   height: 1px;
   background: var(--hairline);
   margin: 14px 0;
 }
-
-/* Streamlit default dividers look a bit heavy */
-hr{
-  border-color: var(--hairline) !important;
-}
+hr{ border-color: var(--hairline) !important; }
 
 /* Inputs */
 .stTextInput input,
@@ -245,20 +227,14 @@ button[kind="primary"]{
   background: linear-gradient(180deg, rgba(247,182,200,1) 0%, rgba(244,143,177,1) 100%) !important;
   color: #111 !important;
   border: none !important;
-  border-radius: 999px !important;              /* iOS pill */
+  border-radius: 999px !important;
   font-weight: 900 !important;
   padding: 0.66rem 1.05rem !important;
   box-shadow: 0 12px 26px rgba(244,143,177,0.22) !important;
   transition: transform .08s ease, filter .2s ease;
 }
-button[kind="primary"]:hover{
-  filter: brightness(1.02);
-}
-button[kind="primary"]:active{
-  transform: scale(0.98);
-}
+button[kind="primary"]:active{ transform: scale(0.98); }
 
-/* Secondary buttons */
 div.stButton > button:not([kind="primary"]){
   background: rgba(255,255,255,0.85) !important;
   color: var(--text) !important;
@@ -269,14 +245,9 @@ div.stButton > button:not([kind="primary"]){
   box-shadow: var(--shadow-soft) !important;
   transition: transform .08s ease, background .2s ease;
 }
-div.stButton > button:not([kind="primary"]):hover{
-  background: rgba(255,255,255,0.95) !important;
-}
-div.stButton > button:not([kind="primary"]):active{
-  transform: scale(0.985);
-}
+div.stButton > button:not([kind="primary"]):active{ transform: scale(0.985); }
 
-/* Tabs: iOS segmented control vibe */
+/* Tabs */
 div[data-testid="stTabs"] button{
   border-radius: 999px !important;
   border: 1px solid var(--hairline) !important;
@@ -301,10 +272,6 @@ div[data-testid="stChatMessage"]{
   position: relative;
   overflow: hidden;
 }
-div[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"]{
-  font-size: 15px;
-  line-height: 1.65;
-}
 div[data-testid="stChatMessage"]::before{
   content:"";
   position:absolute;
@@ -312,8 +279,12 @@ div[data-testid="stChatMessage"]::before{
   pointer-events:none;
   background: linear-gradient(180deg, rgba(247,182,200,0.10) 0%, rgba(255,255,255,0) 55%);
 }
+div[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"]{
+  font-size: 15px;
+  line-height: 1.65;
+}
 
-/* Recommended music card */
+/* Music card */
 .dw-music-card{
   display: flex;
   gap: 18px;
@@ -349,20 +320,92 @@ div[data-testid="stChatMessage"]::before{
   margin-top: 10px;
 }
 
-/* Tables look more like iOS */
-div[data-testid="stTable"]{
-  border-radius: var(--radius-xl);
-  overflow: hidden;
+/* iOS-like metric cards */
+.dw-metric-grid{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+@media (max-width: 920px){
+  .dw-metric-grid{ grid-template-columns: 1fr; }
+}
+.dw-metric-card{
+  background: rgba(255,255,255,0.82);
   border: 1px solid var(--hairline);
-  background: rgba(255,255,255,0.9);
+  border-radius: 18px;
+  padding: 14px 16px;
   box-shadow: var(--shadow-soft);
 }
-div[data-testid="stTable"] table{
-  border-collapse: separate !important;
-  border-spacing: 0;
+.dw-metric-label{
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0;
+}
+.dw-metric-value{
+  font-size: 22px;
+  font-weight: 900;
+  margin: 6px 0 0 0;
+  letter-spacing: -0.4px;
+}
+.dw-metric-sub{
+  font-size: 13px;
+  color: rgba(60,60,67,0.78);
+  margin: 6px 0 0 0;
 }
 
-/* Subtle scrollbar */
+/* Progress (custom bar) */
+.dw-progress-wrap{
+  margin-top: 14px;
+  margin-bottom: 8px;
+}
+.dw-progress-label{
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.dw-progress-rail{
+  height: 10px;
+  background: rgba(60,60,67,0.10);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid rgba(60,60,67,0.10);
+}
+.dw-progress-fill{
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, rgba(247,182,200,1) 0%, rgba(244,143,177,1) 100%);
+  border-radius: 999px;
+}
+
+/* Footer glass bar (visual only) */
+.dw-footer{
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 10px 16px 14px 16px;
+  background: rgba(255,255,255,0.72);
+  border-top: 1px solid var(--hairline);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  z-index: 999;
+}
+.dw-footer-inner{
+  max-width: 980px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.dw-footer-hint{
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.3;
+}
+
+/* subtle scrollbar */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb {
   background: rgba(60,60,67,0.22);
@@ -465,7 +508,6 @@ def closing_message(style_mode: str, name: str, one_word: str, best: str, growth
     ]
     cheer = random.choice(cheers)
 
-    # 2~3문장 + 마지막 응원(과장 X)
     if style_mode == "친한친구":
         return f"오늘은 **{one_word}**라는 단어가 참 잘 어울리는 하루였어요. 특히 {best_s} 그 장면이 오래 남을 것 같아요. {cheer}"
     if style_mode == "반려동물":
@@ -474,7 +516,6 @@ def closing_message(style_mode: str, name: str, one_word: str, best: str, growth
         return f"{name}님, 오늘의 기록을 정리했습니다. 핵심 단어는 **{one_word}**이며, 기억에 남는 순간은 {best_s}입니다. 성장 포인트는 {growth_s}로 요약됩니다. {cheer}"
     if style_mode == "인생의 멘토":
         return f"오늘을 **{one_word}**로 정리한 감각이 정확해요. {growth_s}을 발견한 것은 앞으로의 방향을 바꿀 수 있어요. {cheer}"
-    # 감성 에디터
     return f"오늘은 **{one_word}**라는 단어가 하루를 조용히 감싸고 있었어요. {best_s} 그 장면이 한 장의 사진처럼 남아 있네요. {cheer}"
 
 def parse_entry_date(e: dict) -> date | None:
@@ -536,7 +577,6 @@ def show_growth_summary(entries: list[dict], title: str):
 
     st.markdown(f"### {theme_emoji} {title}")
 
-    # 표 요약
     table = {
         "항목": ["기록일수", "대표 활동", "핵심 단어", "대표 기분"],
         "내용": [
@@ -548,7 +588,6 @@ def show_growth_summary(entries: list[dict], title: str):
     }
     st.table(table)
 
-    # 글 요약(거시적)
     st.markdown("**이번 기간의 흐름**")
     st.write(f"- {theme_line}")
     if act_top:
@@ -618,7 +657,6 @@ def push_user(msg: str):
 # 선택 UI: 가능한 경우 st.pills 우선 사용
 # =========================
 def choose_single_pills(label: str, options: list[str], key: str):
-    # Streamlit 버전에 따라 st.pills가 없을 수 있음 → fallback to radio
     if hasattr(st, "pills"):
         return st.pills(label, options, selection_mode="single", default=st.session_state.get(key), key=key, label_visibility="collapsed")
     else:
@@ -629,6 +667,99 @@ def choose_multi_pills(label: str, options: list[str], key: str):
         return st.pills(label, options, selection_mode="multi", default=st.session_state.get(key, []), key=key, label_visibility="collapsed")
     else:
         return st.multiselect(label, options, default=st.session_state.get(key, []), key=key, label_visibility="collapsed")
+
+
+# =========================
+# UI helpers: progress + dashboard + footer
+# =========================
+def progress_ratio(step: int) -> float:
+    # step: 1~6 질문, 7 완료
+    if step <= 0:
+        return 0.0
+    if step >= 7:
+        return 1.0
+    # 1~6 -> 0.0~1.0 (6개 질문 기준)
+    return (step - 1) / 6.0
+
+def render_progress(step: int):
+    if not st.session_state.chat_started:
+        return
+    r = progress_ratio(step)
+    pct = int(round(r * 100))
+    st.markdown(
+        f"""
+<div class="dw-progress-wrap">
+  <div class="dw-progress-label">오늘의 기록 진행률 · <b>{pct}%</b></div>
+  <div class="dw-progress-rail">
+    <div class="dw-progress-fill" style="width:{pct}%;"></div>
+  </div>
+</div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def render_footer_hint(step: int):
+    if not st.session_state.chat_started:
+        return
+    if step == 7:
+        hint = "기록이 저장됐어요 · 오늘 기록을 다시 하고 싶으면 아래 버튼을 눌러요."
+    else:
+        hint = "아래 버튼으로 다음 단계로 넘어가요 · 편하게 천천히 적어도 괜찮아요."
+    st.markdown(
+        f"""
+<div class="dw-footer">
+  <div class="dw-footer-inner">
+    <div class="dw-footer-hint">{hint}</div>
+    <div class="dw-footer-hint">메인 컬러: 연핑크 🌸</div>
+  </div>
+</div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def compute_overview(entries: list[dict], days: int):
+    recent = filter_entries_last_days(entries, days)
+    if not recent:
+        return {"days": 0, "top_act": "-", "top_word": "-", "top_mood": "-"}
+    moods, acts, words = [], [], []
+    for e in recent:
+        ans = e.get("answers", {})
+        moods.append(ans.get("mood", ""))
+        acts.extend(ans.get("activities", []))
+        words.append(ans.get("one_word", ""))
+    top_act = Counter(acts).most_common(1)[0][0] if acts else "-"
+    top_word = Counter([w for w in words if w]).most_common(1)[0][0] if any(words) else "-"
+    top_mood = Counter([m for m in moods if m]).most_common(1)[0][0] if any(moods) else "-"
+    return {"days": len(recent), "top_act": top_act, "top_word": top_word, "top_mood": top_mood}
+
+def render_growth_dashboard(all_entries: list[dict]):
+    w = compute_overview(all_entries, 7)
+    m = compute_overview(all_entries, 30)
+    y = compute_overview(all_entries, 365)
+
+    st.markdown("### ✨ 성장서사 요약 대시보드")
+    st.markdown(
+        f"""
+<div class="dw-metric-grid">
+  <div class="dw-metric-card">
+    <p class="dw-metric-label">이번 주</p>
+    <p class="dw-metric-value">{w["days"]}일</p>
+    <p class="dw-metric-sub">대표 활동: <b>{w["top_act"]}</b> · 핵심 단어: <b>{w["top_word"]}</b></p>
+  </div>
+  <div class="dw-metric-card">
+    <p class="dw-metric-label">이번 달</p>
+    <p class="dw-metric-value">{m["days"]}일</p>
+    <p class="dw-metric-sub">대표 활동: <b>{m["top_act"]}</b> · 핵심 단어: <b>{m["top_word"]}</b></p>
+  </div>
+  <div class="dw-metric-card">
+    <p class="dw-metric-label">올해</p>
+    <p class="dw-metric-value">{y["days"]}일</p>
+    <p class="dw-metric-sub">대표 활동: <b>{y["top_act"]}</b> · 핵심 단어: <b>{y["top_word"]}</b></p>
+  </div>
+</div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 # =========================
@@ -648,7 +779,6 @@ with st.sidebar:
         label_visibility="collapsed",
     )
 
-    # 프로필 표시/수정
     st.divider()
     st.subheader("내 프로필")
     prof = st.session_state.profile or {}
@@ -668,6 +798,11 @@ with st.sidebar:
     st.divider()
     st.subheader("성장서사 보기")
     all_entries = read_entries()
+
+    # ✅ 새로: 요약 대시보드
+    render_growth_dashboard(all_entries)
+
+    # 기존 상세 탭은 유지
     wtab, mtab, ytab = st.tabs(["주간", "월간", "연간"])
     with wtab:
         show_growth_summary(filter_entries_last_days(all_entries, 7), "이번 주 성장서사")
@@ -678,17 +813,17 @@ with st.sidebar:
 
 
 # ---- Main Header ----
-# (로고는 원하면 켜기)
 if ASSET_LOGO and os.path.exists(ASSET_LOGO):
     st.image(ASSET_LOGO, width=160)
 
-# 헤더를 카드로 감싸서 iOS 앱 느낌 강화
 st.markdown('<div class="dw-card">', unsafe_allow_html=True)
 st.markdown(f'<div class="dw-title">{APP_TITLE}</div>', unsafe_allow_html=True)
-
-# ✅ 네가 고른 첫 화면 2줄 문구 “그대로 적용”
 st.markdown('<div class="dw-sub"><b>하루를 간단히 기록해보세요.</b></div>', unsafe_allow_html=True)
 st.markdown('<div class="dw-sub">기록이 쌓이면 경험이 정리되고, 포트폴리오의 이야기가 만들어져요.</div>', unsafe_allow_html=True)
+
+# ✅ 새로: Progress bar (대화 시작 후 표시)
+render_progress(st.session_state.step)
+
 st.markdown("</div>", unsafe_allow_html=True)
 
 
@@ -724,7 +859,6 @@ if st.session_state.show_onboarding:
     st.markdown("</div>", unsafe_allow_html=True)
 
     if cancel:
-        # 프로필이 없으면 온보딩을 나가면 안 되니까 최소 프로필 생성
         if st.session_state.profile is None:
             st.session_state.profile = {"name": "사용자", "age": None, "gender": "선택 안 함", "job": ""}
             save_profile(st.session_state.profile)
@@ -943,7 +1077,6 @@ elif st.session_state.chat_started and step == 7:
         st.markdown("**오늘의 추천곡은 이 노래예요.**")
         st.caption("오늘의 분위기와 가장 잘 어울리는 곡을 골라봤어요.")
 
-        # 커버 더 크게 + iOS 카드 느낌
         st.markdown(
             f"""
 <div class="dw-music-card">
@@ -975,5 +1108,8 @@ elif st.session_state.chat_started and step == 7:
             "growth": "",
             "special_answer": "",
         }
-        # 내일이면 자동으로 새 질문이 뜨고, 오늘은 고정 유지
         st.rerun()
+
+
+# ✅ 하단 iOS 스타일 glass footer (visual)
+render_footer_hint(st.session_state.step)
