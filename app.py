@@ -99,7 +99,7 @@ TAG_LABEL = {
 
 
 # =========================
-# 스타일(CSS): iMessage-like bubbles + 연핑크 더 연하게 + 음악 카드 버블용
+# 스타일(CSS)
 # =========================
 def inject_css():
     st.markdown(
@@ -116,9 +116,9 @@ def inject_css():
   --accent-strong: #F48FB1;
   --accent-soft: rgba(247,182,200,0.18);
 
-  /* ✅ User bubble: 더 연하게 */
-  --you-top: #FBE1E8;     /* very light pink */
-  --you-bottom: #F7C8D6;  /* soft pink */
+  /* User bubble (soft) */
+  --you-top: #FBE1E8;
+  --you-bottom: #F7C8D6;
   --bubble-you: linear-gradient(180deg, var(--you-top) 0%, var(--you-bottom) 100%);
   --bubble-you-text: #111;
 
@@ -130,6 +130,7 @@ def inject_css():
   --radius: 20px;
 }
 
+/* Background */
 .stApp{
   background:
     radial-gradient(1100px 700px at 15% -10%, rgba(247,182,200,0.22) 0%, rgba(245,245,247,0) 60%),
@@ -142,19 +143,62 @@ def inject_css():
 
 .main .block-container{
   max-width: 980px;
-  padding-top: 1.3rem;
+  padding-top: 1.2rem;
   padding-bottom: 2.6rem;
 }
 
-/* Sidebar glass */
+/* =========================
+   ✅ Sidebar: 더 iOS스럽게 (심플 + 유리질감 + 구분선 최소)
+   ========================= */
 section[data-testid="stSidebar"]{
-  background: rgba(255,255,255,0.70) !important;
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border-right: 1px solid var(--hairline) !important;
+  background: rgba(255,255,255,0.58) !important;
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  border-right: 1px solid rgba(60,60,67,0.10) !important;
+}
+section[data-testid="stSidebar"] .block-container{
+  padding-top: 1.1rem;
+}
+section[data-testid="stSidebar"] h3{
+  font-size: 14px !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.2px;
+  color: rgba(60,60,67,0.92);
+  margin-bottom: 0.6rem;
+}
+section[data-testid="stSidebar"] hr{
+  border: none;
+  height: 1px;
+  background: rgba(60,60,67,0.10);
+  margin: 0.9rem 0;
 }
 
-/* Header */
+/* Sidebar widgets: 라디오/탭/버튼 더 깔끔 */
+section[data-testid="stSidebar"] label,
+section[data-testid="stSidebar"] p,
+section[data-testid="stSidebar"] span{
+  color: rgba(60,60,67,0.90) !important;
+}
+section[data-testid="stSidebar"] div[role="radiogroup"]{
+  padding: 8px 10px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.55);
+  border: 1px solid rgba(60,60,67,0.10);
+}
+section[data-testid="stSidebar"] div[role="radiogroup"] label{
+  padding: 8px 8px;
+  border-radius: 12px;
+}
+section[data-testid="stSidebar"] div[role="radiogroup"] label:hover{
+  background: rgba(247,182,200,0.12);
+}
+section[data-testid="stSidebar"] .stButton button{
+  border-radius: 999px !important;
+}
+
+/* =========================
+   Header
+   ========================= */
 .dw-header{ margin: 0 0 10px 0; }
 .dw-title{
   font-size: 30px;
@@ -169,7 +213,9 @@ section[data-testid="stSidebar"]{
   line-height: 1.5;
 }
 
-/* Chat wrapper (no box) */
+/* =========================
+   Chat wrapper (no box)
+   ========================= */
 .dw-chat{
   padding: 10px 8px;
   border: none;
@@ -214,7 +260,7 @@ section[data-testid="stSidebar"]{
   transform: rotate(45deg);
 }
 
-/* ✅ User bubble (lighter) */
+/* User bubble */
 .dw-bubble.you{
   background: var(--bubble-you);
   color: var(--bubble-you-text);
@@ -285,13 +331,12 @@ div.stButton > button:not([kind="primary"]){
   box-shadow: 0 10px 22px rgba(0,0,0,0.06) !important;
 }
 
-/* ✅ Music bubble content (inside assistant bubble) */
+/* Music (inside bubble) */
 .dw-music-inbubble{
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid rgba(60,60,67,0.10);
 }
-
 .dw-music-card{
   display:flex;
   gap: 14px;
@@ -303,11 +348,11 @@ div.stButton > button:not([kind="primary"]){
   box-shadow: 0 12px 26px rgba(0,0,0,0.08);
 }
 
-/* ✅ Cover bigger */
+/* ✅ Cover bigger: 190px */
 .dw-cover{
-  width: 160px;
-  height: 160px;
-  border-radius: 18px;
+  width: 190px;
+  height: 190px;
+  border-radius: 20px;
   object-fit: cover;
   border: 1px solid rgba(60,60,67,0.12);
   box-shadow: 0 12px 26px rgba(0,0,0,0.12);
@@ -327,7 +372,7 @@ div.stButton > button:not([kind="primary"]){
   margin-top: 10px;
 }
 
-/* Spacing */
+/* spacing */
 div[data-testid="stMarkdown"]{ margin-bottom: 0.35rem; }
 </style>
         """,
@@ -888,7 +933,7 @@ elif step == 6:
         next_step()
 
 
-# Step 7 — 완료: 마무리 + 추천곡을 말풍선 안에
+# Step 7 — 완료: 마무리 + 추천곡(말풍선 안)
 elif step == 7:
     profile = st.session_state.profile or {}
     name = profile.get("name", "사용자")
@@ -928,7 +973,6 @@ elif step == 7:
     }
     append_entry(entry)
 
-    # ✅ 한 번만: "마무리 + 음악카드"를 하나의 말풍선(assistant)로 넣기
     if not st.session_state.final_pushed:
         music_html = f"""
 <b>{closing}</b>
@@ -941,7 +985,8 @@ elif step == 7:
       <p class="dw-music-artist">{song["artist"]}</p>
       <div class="dw-tag">{TAG_LABEL.get(tag, tag)}</div>
       <div style="margin-top:10px;">
-        <a href="{link}" target="_blank" style="text-decoration:none; font-weight:900; color: rgba(60,60,67,0.95);">
+        <a href="{link}" target="_blank"
+           style="text-decoration:none; font-weight:900; color: rgba(60,60,67,0.95);">
           Spotify에서 듣기 →
         </a>
       </div>
@@ -954,7 +999,6 @@ elif step == 7:
         st.session_state.final_pushed = True
         st.rerun()
 
-    # 다시하기 버튼만 아래에
     st.markdown('<div class="dw-composer">', unsafe_allow_html=True)
     if st.button("오늘 기록 다시 하기", use_container_width=True):
         st.session_state.step = 0
